@@ -5,8 +5,12 @@ import android.util.Log
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
-import data.ApiConnection
+import data.AuthService
+import data.HttpClientProvider
+import data.UserService
 import kotlinx.coroutines.launch
+import model.AuthUsuario
+import model.EstanqueByUsuarioResponse
 import model.ResponseHttp
 import model.Usuario
 import moe.tlaster.precompose.viewmodel.ViewModel
@@ -17,7 +21,8 @@ class UsuarioViewModel(private val tokenViewModel: TokenViewModel) : ViewModel()
         Log.d("UsuarioViewModel", "UsuarioViewModel creado")
     }
 
-    private val apiConnection = ApiConnection()
+    private val userService = UserService(HttpClientProvider.client)
+    private val authService = AuthService(HttpClientProvider.client)
 
     var usuario: Usuario? by mutableStateOf(null)
         private set
@@ -26,6 +31,10 @@ class UsuarioViewModel(private val tokenViewModel: TokenViewModel) : ViewModel()
         private set
 
     var userImageUri: Uri? by mutableStateOf(null)
+        private set
+
+    // Lista de estanques relacionados con el usuario
+    var estanquesByUsuario = mutableStateOf<EstanqueByUsuarioResponse?>(null)
         private set
 
     // Actualizar la URI de la imagen del usuario
@@ -38,24 +47,60 @@ class UsuarioViewModel(private val tokenViewModel: TokenViewModel) : ViewModel()
         usuario = newUsuario
     }
 
-    // Cargar la lista de usuarios desde la API
-    fun loadUsers(onError: (String) -> Unit = {}) {
+    // Iniciar sesión de usuario
+    fun loginUser(authUsuario: AuthUsuario, onSuccess: () -> Unit, onError: (String) -> Unit) {
         viewModelScope.launch {
-            val currentToken = tokenViewModel.token
-            if (currentToken.isNullOrBlank()) {
-                onError("No hay token de acceso disponible")
-                return@launch
-            }
-
             try {
-                val users = apiConnection.getUsers(currentToken)
-                usuarios = users ?: emptyList()
-                if (users == null) {
-                    onError("No se pudieron cargar los usuarios")
+                // Llamada al servicio de autenticación
+                val tokenResponse = authService.login(authUsuario)
+
+                if (tokenResponse != null) {
+                    Log.d("Login", "Token recibido: ${tokenResponse.token}")
+
+                    // Validar token y obtener usuario
+                    val validatedUser = authService.validateToken(ResponseHttp(tokenResponse.token))
+
+                    if (validatedUser != null) {
+                        // Actualizamos el usuario y el token en el ViewModel
+                        usuario = validatedUser
+                        Log.d("UsuarioViewModel", "Usuario logueado: $usuario")
+                        tokenViewModel.updateToken(tokenResponse.token)
+
+                        onSuccess()  // Llamamos a la función de éxito
+                    } else {
+                        onError("No se pudo validar el token o obtener el usuario")
+                    }
+                } else {
+                    onError("Credenciales incorrectas")
                 }
             } catch (e: Exception) {
-                Log.e("UsuarioViewModel", "Error al cargar los usuarios: ${e.message}")
-                onError("Error al cargar los usuarios")
+                Log.e("UsuarioViewModel", "Error durante el login: ${e.message}")
+                onError("Error durante el inicio de sesión: ${e.message}")
+            }
+        }
+    }
+
+    // Cargar estanques de un usuario por ID con token de autenticación
+    fun loadEstanquesByUsuario(userId: Long, onError: (String) -> Unit = {}) {
+        val token = tokenViewModel.token
+
+        if (token.isNullOrBlank()) {
+            onError("Token de acceso inválido o no disponible")
+            return
+        }
+
+        viewModelScope.launch {
+            try {
+                val response = userService.getEstanquesByUsuario(token, userId)
+                if (response != null) {
+                    estanquesByUsuario.value = response
+                    Log.d("UsuarioViewModel", "Estanques cargados para el usuario $userId")
+                } else {
+                    onError("No se pudieron cargar los estanques del usuario")
+                }
+            } catch (e: Exception) {
+                Log.e("UsuarioViewModel", "Error al cargar los estanques: ${e.message}")
+                onError("Error al cargar los estanques del usuario")
             }
         }
     }
@@ -70,7 +115,7 @@ class UsuarioViewModel(private val tokenViewModel: TokenViewModel) : ViewModel()
             }
 
             try {
-                val result = apiConnection.updateUser(currentToken, usuario)
+                val result = userService.updateUser(currentToken, usuario)
                 if (result) {
                     usuarios = usuarios.map {
                         if (it.idUsuario == usuario.idUsuario) usuario else it
@@ -96,7 +141,7 @@ class UsuarioViewModel(private val tokenViewModel: TokenViewModel) : ViewModel()
             }
 
             try {
-                val result = apiConnection.deleteUser(currentToken, userId)
+                val result = userService.deleteUser(currentToken, userId)
                 if (result) {
                     usuarios = usuarios.filter { it.idUsuario != userId }
                     onSuccess()
@@ -106,52 +151,6 @@ class UsuarioViewModel(private val tokenViewModel: TokenViewModel) : ViewModel()
             } catch (e: Exception) {
                 Log.e("UsuarioViewModel", "Error al eliminar el usuario: ${e.message}")
                 onError("Error al eliminar el usuario")
-            }
-        }
-    }
-
-    // Crear un nuevo usuario
-    fun createUser(usuario: Usuario, onSuccess: () -> Unit, onError: (String) -> Unit) {
-        viewModelScope.launch {
-            val currentToken = tokenViewModel.token
-            if (currentToken.isNullOrBlank()) {
-                onError("No hay token de acceso")
-                return@launch
-            }
-
-            try {
-                val result = apiConnection.createUser(usuario)
-                if (result) {
-                    usuarios = usuarios + usuario
-                    onSuccess()
-                } else {
-                    onError("No se pudo crear el usuario")
-                }
-            } catch (e: Exception) {
-                Log.e("UsuarioViewModel", "Error al crear el usuario: ${e.message}")
-                onError("Error al crear el usuario")
-            }
-        }
-    }
-
-    // Validar al usuario usando la API
-    fun validateUser(response: ResponseHttp, onSuccess: () -> Unit, onError: (String) -> Unit) {
-        viewModelScope.launch {
-            try {
-                Log.d("Login", "Validando token: ${response.accessToken}")
-                val validationResponse = apiConnection.validation(response)
-                if (validationResponse != null) {
-                    Log.d("Login", "Respuesta de validación: $validationResponse")
-                    updateUser(validationResponse)
-                    tokenViewModel.updateToken(response.accessToken)
-                    onSuccess()
-                } else {
-                    Log.d("Login", "Respuesta de validación es nula")
-                    onError("Usuario inválido")
-                }
-            } catch (e: Exception) {
-                Log.e("Login", "Error durante la validación: ${e.message}")
-                onError("Error de validación")
             }
         }
     }

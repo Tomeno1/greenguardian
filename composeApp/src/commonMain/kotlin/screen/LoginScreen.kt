@@ -4,11 +4,29 @@ import android.util.Log
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
-import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
-import androidx.compose.material.*
-import androidx.compose.runtime.*
+import androidx.compose.material.Checkbox
+import androidx.compose.material.CheckboxDefaults
+import androidx.compose.material.Text
+import androidx.compose.material.TextField
+import androidx.compose.material.TextFieldDefaults
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -19,9 +37,8 @@ import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.input.TextFieldValue
 import androidx.compose.ui.unit.dp
 import components.CustomButton
-import data.ApiConnection
 import kotlinx.coroutines.launch
-import model.ResponseHttp
+import model.AuthUsuario
 import model.Usuario
 import moe.tlaster.precompose.navigation.Navigator
 import techminds.greenguardian.R
@@ -29,7 +46,11 @@ import viewModel.TokenViewModel
 import viewModel.UsuarioViewModel
 
 @Composable
-fun LoginScreen(navigator: Navigator, tokenViewModel: TokenViewModel, usuarioViewModel: UsuarioViewModel) {
+fun LoginScreen(
+    navigator: Navigator,
+    tokenViewModel: TokenViewModel,
+    usuarioViewModel: UsuarioViewModel
+) {
     Box(
         modifier = Modifier
             .fillMaxSize()
@@ -60,7 +81,11 @@ fun Logo() {
 }
 
 @Composable
-fun LoginForm(navigator: Navigator, tokenViewModel: TokenViewModel, usuarioViewModel: UsuarioViewModel) {
+fun LoginForm(
+    navigator: Navigator,
+    tokenViewModel: TokenViewModel,
+    usuarioViewModel: UsuarioViewModel
+) {
     val usernameState = remember { mutableStateOf(TextFieldValue()) }
     val passwordState = remember { mutableStateOf(TextFieldValue()) }
     var errorMessage by remember { mutableStateOf("") }
@@ -108,37 +133,31 @@ fun LoginForm(navigator: Navigator, tokenViewModel: TokenViewModel, usuarioViewM
         onClick = {
             scope.launch {
                 if (usernameState.value.text.isNotEmpty() && passwordState.value.text.isNotEmpty()) {
-                    val requestHttp = Usuario(
-                        idUsuario = 0,
-                        nombre = usernameState.value.text,
-                        contraseña = passwordState.value.text,
-                        role = "" // Ajusta según tu implementación
+                    val authUsuario = AuthUsuario(
+                        email = usernameState.value.text,
+                        pass = passwordState.value.text
                     )
 
-                    Log.d("Login", "Enviando solicitud de autenticación para el usuario: ${usernameState.value.text}")
-                    val tokenResponse = ApiConnection().postUser(requestHttp)
-                    if (tokenResponse != null) {
-                        val response = ResponseHttp(accessToken = tokenResponse)
-                        Log.d("Login", "Token obtenido: ${response.accessToken}")
-
-                        usuarioViewModel.validateUser(response, {
-                            Log.d("Login", "Token válido: ${response.accessToken}")
-                            usuarioViewModel.usuario?.let { usuario ->
-                                Log.d("Login", "Nombre: ${usuario.nombre}, Rol: ${usuario.role}")
-                                when (usuario.role) {
-                                    "ADMIN" -> navigator.navigate("/home")
-                                    "USER" -> navigator.navigate("/home")
-                                    else -> navigator.navigate("/home")
-                                }
+                    Log.d(
+                        "Login",
+                        "Enviando solicitud de autenticación para el usuario: ${usernameState.value.text}"
+                    )
+                    usuarioViewModel.loginUser(authUsuario, {
+                        // Acción cuando el login es exitoso (onSuccess)
+                        Log.d("Login", "Inicio de sesión exitoso")
+                        usuarioViewModel.usuario?.let { usuario ->
+                                Log.d("Login", "Nombre: ${usuario.email}, Contraseña: ${usuario.pass}")
+                            // Navegación basada en el rol del usuario
+                            when (usuario.role) {
+                                "ADMIN" -> navigator.navigate("/home")
+                                "USER" -> navigator.navigate("/home")
+                                else -> navigator.navigate("/home")
                             }
-                        }, { error ->
-                            Log.d("Login", error)
-                            errorMessage = error
-                        })
-                    } else {
-                        Log.d("Login", "Usuario o contraseña incorrectos")
-                        errorMessage = "Usuario o contraseña incorrectos"
-                    }
+                        }
+                    }, { error ->
+                        Log.d("Login", error)
+                        errorMessage = error
+                    })
                 } else {
                     errorMessage = "Debe completar todos los campos"
                 }

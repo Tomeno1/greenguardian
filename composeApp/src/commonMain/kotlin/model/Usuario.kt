@@ -6,9 +6,13 @@ import kotlinx.serialization.Serializable
 data class Usuario(
     val idUsuario: Long,
     val nombre: String,
-    val contraseña: String,
+    val apellido: String,
+    val email: String,
+    val pass: String,
     val role: String,
-    var estanques: List<Estanque> = emptyList()
-
 )
-
+@Serializable
+data class AuthUsuario(
+    val email: String,
+    val pass: String
+)

@@ -1,9 +1,9 @@
 import android.util.Log
 import androidx.compose.runtime.mutableStateListOf
-import data.ApiConnection
+import data.HttpClientProvider
+import data.OpenAIService
 import kotlinx.coroutines.launch
 import model.MessageinBubble
-import model.OpenAIService
 import moe.tlaster.precompose.viewmodel.ViewModel
 import moe.tlaster.precompose.viewmodel.viewModelScope
 
@@ -12,8 +12,6 @@ class ChatViewModel(private val openAIService: OpenAIService) : ViewModel() {
     init {
         Log.d("ChatViewModel", "ChatViewModel creado")
     }
-
-    private val apiConnection = ApiConnection()
 
     // Lista de mensajes para el chat
     var messages = mutableStateListOf<MessageinBubble>()
@@ -64,7 +62,7 @@ class ChatViewModel(private val openAIService: OpenAIService) : ViewModel() {
                     // Pregunta de seguimiento sobre un tema anterior
                     try {
                         val followUpPrompt = "Proporciona más información sobre $lastResponseTopic."
-                        val result = apiConnection.getChatGPTResponse(followUpPrompt)
+                        val result = openAIService.getResponse(followUpPrompt)
                         addBotMessage(result)
                     } catch (e: Exception) {
                         Log.d("ChatViewModel", "Error al obtener más información sobre $lastResponseTopic: ${e.message}")
@@ -74,7 +72,7 @@ class ChatViewModel(private val openAIService: OpenAIService) : ViewModel() {
                 isRelatedToHydroponics(prompt) -> {
                     // Pregunta relacionada con hidroponía
                     try {
-                        val result = apiConnection.getChatGPTResponse(prompt)
+                        val result = openAIService.getResponse(prompt)
                         addBotMessage(result)
                         lastResponseTopic = prompt  // Guardar el tema tratado
                     } catch (e: Exception) {

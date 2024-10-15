@@ -1,3 +1,10 @@
+/*import screen.AdminScreen
+import screen.CreateEstanqueScreen
+import screen.CreateUserScreen
+import screen.EditEstanqueScreen
+import screen.EditUserScreen
+import screen.ListEstanquesScreen*/
+//import viewModel.EstanqueViewModel
 import android.util.Log
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
@@ -35,29 +42,18 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
 import components.DrawerContent
 import components.SetSystemBarsColor
-import io.ktor.client.HttpClient
-import io.ktor.client.engine.cio.CIO
+import data.HttpClientProvider
+import data.OpenAIService
 import kotlinx.coroutines.launch
-import model.OpenAIService
 import moe.tlaster.precompose.PreComposeApp
 import moe.tlaster.precompose.navigation.NavHost
 import moe.tlaster.precompose.navigation.rememberNavigator
 import moe.tlaster.precompose.viewmodel.viewModel
 import org.jetbrains.compose.ui.tooling.preview.Preview
-import screen.AdminScreen
 import screen.CamaraScreen
-import screen.CreateEstanqueScreen
-import screen.CreateUserScreen
-import screen.EditEstanqueScreen
-import screen.EditUserScreen
-import screen.ListEstanquesScreen
 import screen.LoginScreen
-import screen.PondDetailScreen
 import screen.PondScreen
 import techminds.greenguardian.R
-import ui.ProfileScreen
-import viewModel.EstanqueViewModel
-import viewModel.SensorDataViewModel
 import viewModel.TokenViewModel
 import viewModel.UsuarioViewModel
 
@@ -66,10 +62,9 @@ import viewModel.UsuarioViewModel
 fun App() {
     PreComposeApp {
         val navigator = rememberNavigator()
-        val chatViewModel = viewModel { ChatViewModel(OpenAIService(HttpClient(CIO))) }
+        val openAIService = OpenAIService(HttpClientProvider.client)
+        val chatViewModel = viewModel { ChatViewModel(openAIService) }
         val tokenViewModel = viewModel { TokenViewModel() }
-        val sensorDataViewModel = viewModel { SensorDataViewModel() }
-        val estanqueViewModel = viewModel { EstanqueViewModel(tokenViewModel) }
         val userViewModel =
             viewModel(keys = listOf(tokenViewModel)) { UsuarioViewModel(tokenViewModel) }
         var currentRoute by remember { mutableStateOf("/login") }
@@ -190,57 +185,24 @@ fun App() {
                         }
                     }
                 ) { paddingValues ->
-                    NavHost(navigator, "/login", Modifier.padding(paddingValues).background(Color(0xFFEFEFEF))) {
+                    NavHost(
+                        navigator,
+                        "/login",
+                        Modifier
+                            .padding(paddingValues)
+                            .background(Color(0xFFEFEFEF))
+                    ) {
                         scene(route = "/login") {
                             currentRoute = "/login"
                             LoginScreen(navigator, tokenViewModel, userViewModel)
                         }
-                        scene(route = "/admin") {
-                            currentRoute = "/admin"
-                            AdminScreen(navigator, userViewModel)
-                        }
                         scene(route = "/home") {
                             currentRoute = "/home"
-                            HomeScreen(navigator,userViewModel)
+                            HomeScreen(navigator, userViewModel)
                         }
-                        scene(route = "/ponds") {
+                       scene(route = "/ponds") {
                             currentRoute = "/ponds"
-                            PondScreen(navigator, userViewModel, estanqueViewModel)
-                        }
-                        scene(route = "/profile") {
-                            currentRoute = "/profile"
-                            ProfileScreen(navigator, tokenViewModel, userViewModel)
-                        }
-                        scene(route = "/edit_user/{userId}") { backStackEntry ->
-                            currentRoute = "/edit_user"
-                            val userId = backStackEntry.pathMap["userId"] ?: return@scene
-                            EditUserScreen(navigator, userViewModel, userId = userId)
-                        }
-                        scene(route = "/create_user") {
-                            currentRoute = "/create_user"
-                            CreateUserScreen(
-                                navigator = navigator,
-                                usuarioViewModel = userViewModel
-                            )
-                        }
-                        scene(route = "/create_estanque/{userId}") { backStackEntry ->
-                            currentRoute = "/create_estanque"
-                            val userId = backStackEntry.pathMap["userId"] ?: return@scene
-                            CreateEstanqueScreen(navigator, estanqueViewModel, userId = userId)
-                        }
-                        scene(route = "/list_estanques/{userId}") { backStackEntry ->
-                            currentRoute = "/list_estanques"
-                            val userId = backStackEntry.pathMap["userId"] ?: return@scene
-                            ListEstanquesScreen(navigator, estanqueViewModel, userId)
-                        }
-                        scene(route = "/edit_estanque/{estanqueId}") { backStackEntry ->
-                            currentRoute = "/edit_estanque"
-                            val estanqueId = backStackEntry.pathMap["estanqueId"] ?: return@scene
-                            EditEstanqueScreen(navigator, estanqueViewModel, estanqueId)
-                        }
-                        scene(route = "/estanque_detail") {
-                            currentRoute = "/estanque_detail"
-                            PondDetailScreen(navigator, estanqueViewModel, sensorDataViewModel)
+                            PondScreen(navigator, userViewModel)
                         }
                         scene(route = "/camara") {
                             currentRoute = "/camara"

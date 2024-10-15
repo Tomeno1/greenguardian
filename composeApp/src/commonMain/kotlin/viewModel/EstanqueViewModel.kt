@@ -1,11 +1,10 @@
 package viewModel
 
 import android.util.Log
-import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.setValue
-import androidx.lifecycle.viewModelScope
-import data.ApiConnection
+import data.EstanqueService
+import data.HttpClientProvider
 import kotlinx.coroutines.launch
 import model.Estanque
 import moe.tlaster.precompose.viewmodel.ViewModel
@@ -15,83 +14,97 @@ class EstanqueViewModel(private val token: TokenViewModel): ViewModel() {
     init {
         Log.d("EstanqueViewModel", "EstanqueViewModel creado")
     }
-    private val apiConnection = ApiConnection()
+    private val estanqueService = EstanqueService(HttpClientProvider.client)
 
-    var estanques: List<Estanque> by mutableStateOf(emptyList())
+    // Lista de estanques observables
+    var estanques = mutableStateListOf<Estanque>()
         private set
 
-    var selectedEstanque: Estanque? by mutableStateOf(null)
+    // Estado del estanque seleccionado
+    var selectedEstanque = mutableStateOf<Estanque?>(null)
         private set
 
-    fun selectEstanque(estanque: Estanque) {
-        selectedEstanque = estanque
+    fun loadEstanques() {
+        viewModelScope.launch {
+            try {
+                val result = estanqueService.getAllEstanques()
+                if (result != null) {
+                    estanques.clear()
+                    estanques.addAll(result)
+                }
+            } catch (e: Exception) {
+                Log.e("EstanqueViewModel", "Error al cargar los estanques: ${e.message}")
+            }
+        }
     }
 
-    fun createEstanque(estanque: Estanque, userId: Long, onSuccess: () -> Unit, onError: (String) -> Unit) {
+    // Cargar un estanque por ID
+    fun loadEstanqueById(idEstanque: Long) {
         viewModelScope.launch {
-            val currentToken = token
-            if (currentToken != null) {
+            try {
+                val result = estanqueService.getEstanqueById(idEstanque)
+                if (result != null) {
+                    selectedEstanque.value = result
+                }
+            } catch (e: Exception) {
+                Log.e("EstanqueViewModel", "Error al cargar el estanque: ${e.message}")
+            }
+        }
+    }
 
-                val result = apiConnection.createEstanque(estanque, userId)
-                if (result) {
+    // Crear un nuevo estanque
+    fun createEstanque(estanque: Estanque, onSuccess: () -> Unit, onError: (String) -> Unit) {
+        viewModelScope.launch {
+            try {
+                val result = estanqueService.createEstanque(estanque)
+                if (result != null) {
+                    estanques.add(result)
                     onSuccess()
                 } else {
-                    Log.d("SessionViewModel", "No se pudo crear el estanque")
+                    onError("No se pudo crear el estanque")
                 }
-            } else {
-                Log.d("SessionViewModel", "No hay token de acceso")
+            } catch (e: Exception) {
+                Log.e("EstanqueViewModel", "Error al crear el estanque: ${e.message}")
+                onError("Error al crear el estanque")
             }
         }
     }
 
-    fun loadEstanques(userId: Long, onSuccess: (List<Estanque>) -> Unit, onError: (String) -> Unit) {
+    // Actualizar un estanque
+    fun updateEstanque(idEstanque: Long, estanque: Estanque, onSuccess: () -> Unit, onError: (String) -> Unit) {
         viewModelScope.launch {
-            val currentToken = token
-            if (currentToken != null) {
-                val fetchedEstanques = apiConnection.getEstanques(userId)
-                if (fetchedEstanques != null) {
-                    estanques = fetchedEstanques
-                    onSuccess(fetchedEstanques)
-                } else {
-                    Log.d("SessionViewModel", "No se pudieron cargar los estanques")
-                    onError("No se pudieron cargar los estanques")
-                    estanques = emptyList()
-                }
-            } else {
-                Log.d("SessionViewModel", "No hay token de acceso")
-                onError("No hay token de acceso")
-            }
-        }
-    }
-
-    fun deleteEstanque(estanqueId: Long, onSuccess: () -> Unit, onError: (String) -> Unit) {
-        viewModelScope.launch {
-            val currentToken = token
-            if (currentToken != null) {
-                val result = apiConnection.deleteEstanque(estanqueId)
-                if (result) {
-                    onSuccess()
-                } else {
-                    onError("No se pudo eliminar el estanque")
-                }
-            } else {
-                onError("No hay token de acceso")
-            }
-        }
-    }
-
-    fun updateEstanque(estanque: Estanque, onSuccess: () -> Unit, onError: (String) -> Unit) {
-        viewModelScope.launch {
-            val currentToken = token
-            if (currentToken != null) {
-                val result = apiConnection.updateEstanque(estanque)
-                if (result) {
+            try {
+                val result = estanqueService.updateEstanque(idEstanque, estanque)
+                if (result != null) {
+                    val index = estanques.indexOfFirst { it.idEstanque == idEstanque }
+                    if (index >= 0) {
+                        estanques[index] = result
+                    }
                     onSuccess()
                 } else {
                     onError("No se pudo actualizar el estanque")
                 }
-            } else {
-                onError("No hay token de acceso")
+            } catch (e: Exception) {
+                Log.e("EstanqueViewModel", "Error al actualizar el estanque: ${e.message}")
+                onError("Error al actualizar el estanque")
+            }
+        }
+    }
+
+    // Eliminar un estanque
+    fun deleteEstanque(idEstanque: Long, onSuccess: () -> Unit, onError: (String) -> Unit) {
+        viewModelScope.launch {
+            try {
+                val result = estanqueService.deleteEstanque(idEstanque)
+                if (result) {
+                    estanques.removeAll { it.idEstanque == idEstanque }
+                    onSuccess()
+                } else {
+                    onError("No se pudo eliminar el estanque")
+                }
+            } catch (e: Exception) {
+                Log.e("EstanqueViewModel", "Error al eliminar el estanque: ${e.message}")
+                onError("Error al eliminar el estanque")
             }
         }
     }
