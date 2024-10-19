@@ -9,17 +9,20 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.Card
 import androidx.compose.material.CircularProgressIndicator
 import androidx.compose.material.MaterialTheme
 import androidx.compose.material.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
@@ -35,20 +38,22 @@ import components.CustomButton
 import components.EstanqueCard
 import components.getImageResourceByName
 import components.getImageRsourceSensorByName
+import model.Estanque
+import model.EstanqueNoSQL
 import model.Status
 import moe.tlaster.precompose.navigation.Navigator
+import viewModel.EstanqueViewModel
 import viewModel.TokenViewModel
 import viewModel.UsuarioViewModel
 
 @Composable
-fun PondScreen(navigator: Navigator, usuarioViewModel: UsuarioViewModel) {
+fun PondScreen(navigator: Navigator, usuarioViewModel: UsuarioViewModel, estanqueViewModel: EstanqueViewModel) {
     val usuario = usuarioViewModel.usuario
     val estanquesByUsuario = usuarioViewModel.estanquesByUsuario.value
     val errorMessage = remember { mutableStateOf<String?>(null) }
 
     LaunchedEffect(usuario) {
         usuario?.let {
-            Log.d("PONDS PANTALLA", "PRUEBA QUE LLEGO ACA")
             usuarioViewModel.loadEstanquesByUsuario(it.idUsuario,
                 onError = { errorMessage.value = "Error al cargar estanques" }
             )
@@ -72,10 +77,13 @@ fun PondScreen(navigator: Navigator, usuarioViewModel: UsuarioViewModel) {
                     val estanque = estanquesByUsuario.listaEstanque[index]
                     EstanqueCard(
                         estanqueName = estanque.idEstanque.toString(),
-                        plantImage = getImageResourceByName("lechuga"), // Reemplaza con la imagen correcta
-                        status = Status.GOOD, // Actualiza el estado según tus datos
+                        plantImage = getImageResourceByName("lechuga"),
+                        status = Status.GOOD,
                         onClick = {
-                            {}
+                            // Cargar los datos de NoSQL al hacer clic en el estanque
+                            estanqueViewModel.loadEstanqueNoSQLById(estanque.idEstanque.toInt())
+                            // Navegar a la pantalla de sensores pasando el ID del estanque
+                            navigator.navigate("/sensorScreen/${estanque.idEstanque}")
                         },
                         buttons = {}
                     )
@@ -88,12 +96,12 @@ fun PondScreen(navigator: Navigator, usuarioViewModel: UsuarioViewModel) {
         errorMessage.value?.let {
             Text(text = it, color = Color.Red, style = MaterialTheme.typography.body2)
         }
-        Spacer(modifier = Modifier.height(16.dp))
     }
 }
 
+
 @Composable
-fun SensorDataItem(label: String, value: Double, imageName: String, color: Color, maxValue: Int) {
+fun SensorDataItem(label: String, value: Int, imageName: String, color: Color, maxValue: Int) {
     val showTooltip = remember { mutableStateOf(false) }
 
     Box(
@@ -102,6 +110,7 @@ fun SensorDataItem(label: String, value: Double, imageName: String, color: Color
             .size(150.dp)
     ) {
         Card(
+            shape = RoundedCornerShape(8.dp),
             modifier = Modifier
                 .clickable { showTooltip.value = !showTooltip.value }
                 .fillMaxSize(),
@@ -159,7 +168,7 @@ fun SensorDataItem(label: String, value: Double, imageName: String, color: Color
                             color = Color.Gray,
                             modifier = Modifier.padding(bottom = 8.dp)
                         )
-                        CustomButton(text = "Cerrar", onClick = { showTooltip.value = false})
+                        CustomButton(text = "Cerrar", onClick = { showTooltip.value = false })
                     }
                 }
             }
@@ -193,9 +202,40 @@ fun CircularProgressWithText(progress: Float, text: String, color: Color) {
     }
 }
 
+@Composable
+fun EstanqueDetailsScreen(estanqueId: Int, estanqueViewModel: EstanqueViewModel) {
+    val selectedEstanqueNoSQL by estanqueViewModel.selectedEstanqueNoSQL
+    val errorNoSQLEstMessage by estanqueViewModel.errorMessage
+
+    // Cargar los datos del estanque en NoSQL
+    LaunchedEffect(estanqueId) {
+        estanqueViewModel.loadEstanqueNoSQLById(estanqueId)
+    }
+
+    Column(
+        modifier = Modifier
+            .fillMaxSize()
+            .padding(16.dp),
+        horizontalAlignment = Alignment.CenterHorizontally
+    ) {
+        Text(text = "Detalles del estanque: $estanqueId")
+
+        // Mostrar los datos de los sensores del estanque seleccionado
+        selectedEstanqueNoSQL?.let { estanque ->
+            Text(text = "Temperatura: ${estanque.deviceData.temperature}°C")
+            Text(text = "Humedad: ${estanque.deviceData.humidity}%")
+            // Añadir más datos según el modelo
+        }
+
+        errorNoSQLEstMessage?.let {
+            Text(text = "Error: $it", color = Color.Red)
+        }
+    }
+}
+
 @Preview(showBackground = true)
 @Composable
 fun PreviewSimpleDashboardLayout() {
-    SensorDataItem(label = "Temperatura", value = 25.0, imageName = "temperatura", color = Color.Blue, maxValue = 100)
+    //SensorDataItem(label = "Temperatura", value = "", imageName = "temperatura", color = Color.Blue, maxValue = 100)
 
 }

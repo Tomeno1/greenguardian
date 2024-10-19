@@ -26,9 +26,11 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import model.Status
+import techminds.greenguardian.R
 
 val DarkGreen = Color(0xFF006400) // Verde oscuro
 val DarkYellow = Color(0xFFCCCC00) // Amarillo oscuro
@@ -102,89 +104,4 @@ fun EstanqueCard(
         }
     }
 }
-
-@Composable
-fun CultivoCard(
-    cultivoName: String,
-    plantImage: Int,
-    onClick: () -> Unit,
-    buttons: @Composable () -> Unit
-) {
-
-    Card(
-        shape = RoundedCornerShape(8.dp),
-        elevation = 4.dp,
-        modifier = Modifier
-            .padding(8.dp)
-            .fillMaxWidth()
-            .heightIn(min = 200.dp)
-            .clickable(onClick = onClick)  // Hacemos la tarjeta clickeable
-    ) {
-        Column(
-            horizontalAlignment = Alignment.CenterHorizontally,
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(8.dp)
-        ) {
-            Box(
-                contentAlignment = Alignment.TopEnd,
-                modifier = Modifier.fillMaxWidth()
-            ) {
-                Image(
-                    painter = painterResource(id = plantImage),
-                    contentDescription = cultivoName,
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .height(120.dp),
-                    contentScale = ContentScale.Crop
-                )
-            }
-            Spacer(modifier = Modifier.height(8.dp))
-            Text(
-                text = cultivoName,
-                fontSize = 18.sp,
-                fontWeight = FontWeight.Bold,
-                color = Color.Black,
-                modifier = Modifier.align(Alignment.Start)
-            )
-
-            Spacer(modifier = Modifier.height(8.dp))
-            buttons()
-        }
-    }
-}
-
-@Composable
-fun StatisticCard(title: String, value: String, image: Int) {
-    Column(
-        horizontalAlignment = Alignment.CenterHorizontally,
-        modifier = Modifier.padding(4.dp)
-    ) {
-        Text(text = "Estanques", style = MaterialTheme.typography.h6.copy(fontWeight = FontWeight.Bold))
-        Spacer(modifier = Modifier.height(8.dp))
-        Card(
-            backgroundColor = Color.White,
-            elevation = 8.dp,
-            modifier = Modifier
-                .width(120.dp)
-        ) {
-            Column(
-                modifier = Modifier.padding(16.dp),
-                verticalArrangement = Arrangement.Center,
-                horizontalAlignment = Alignment.CenterHorizontally
-            ) {
-                Image(
-                    painter = painterResource(id = image),
-                    contentDescription = title,
-                    modifier = Modifier.size(40.dp) // Ajusta el tamaño según sea necesario
-                )
-                Spacer(modifier = Modifier.height(8.dp))
-                Text(text = value, style = MaterialTheme.typography.h6)
-            }
-        }
-        Spacer(modifier = Modifier.height(8.dp))
-        Text(text = title, style = MaterialTheme.typography.body1.copy( fontWeight = FontWeight.Bold))
-    }
-}
-
 

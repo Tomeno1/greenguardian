@@ -47,13 +47,16 @@ import data.OpenAIService
 import kotlinx.coroutines.launch
 import moe.tlaster.precompose.PreComposeApp
 import moe.tlaster.precompose.navigation.NavHost
+import moe.tlaster.precompose.navigation.path
 import moe.tlaster.precompose.navigation.rememberNavigator
 import moe.tlaster.precompose.viewmodel.viewModel
 import org.jetbrains.compose.ui.tooling.preview.Preview
 import screen.CamaraScreen
 import screen.LoginScreen
 import screen.PondScreen
+import screen.SensorScreen
 import techminds.greenguardian.R
+import viewModel.EstanqueViewModel
 import viewModel.TokenViewModel
 import viewModel.UsuarioViewModel
 
@@ -64,6 +67,7 @@ fun App() {
         val navigator = rememberNavigator()
         val openAIService = OpenAIService(HttpClientProvider.client)
         val chatViewModel = viewModel { ChatViewModel(openAIService) }
+        val estanqueViewModel = viewModel { EstanqueViewModel(TokenViewModel()) }
         val tokenViewModel = viewModel { TokenViewModel() }
         val userViewModel =
             viewModel(keys = listOf(tokenViewModel)) { UsuarioViewModel(tokenViewModel) }
@@ -202,18 +206,25 @@ fun App() {
                         }
                        scene(route = "/ponds") {
                             currentRoute = "/ponds"
-                            PondScreen(navigator, userViewModel)
+                            PondScreen(navigator, userViewModel, estanqueViewModel)
+                        }
+                        scene(route = "/sensorScreen/{estanqueId}") { backStackEntry ->
+                            val estanqueId = backStackEntry.path<Long>("estanqueId")
+                            estanqueId?.let {
+                                SensorScreen(estanqueViewModel)  // Mostrar la pantalla de sensores
+                            }
                         }
                         scene(route = "/camara") {
                             currentRoute = "/camara"
                             CamaraScreen(navigator)
                         }
-                        scene("/asistente") {
+                        scene(route = "/asistente") {
                             currentRoute = "/asistente"
                             ChatScreen(chatViewModel)
                         }
                     }
                 }
+
 
             }
         )
