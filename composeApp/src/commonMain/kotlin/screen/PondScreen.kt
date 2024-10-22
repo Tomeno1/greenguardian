@@ -1,5 +1,6 @@
 package screen
 
+import android.content.Context
 import android.util.Log
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.clickable
@@ -38,6 +39,7 @@ import components.CustomButton
 import components.EstanqueCard
 import components.getImageResourceByName
 import components.getImageRsourceSensorByName
+import components.sendLocalNotification
 import model.Estanque
 import model.EstanqueNoSQL
 import model.Status
@@ -47,7 +49,12 @@ import viewModel.TokenViewModel
 import viewModel.UsuarioViewModel
 
 @Composable
-fun PondScreen(navigator: Navigator, usuarioViewModel: UsuarioViewModel, estanqueViewModel: EstanqueViewModel) {
+fun PondScreen(
+
+    navigator: Navigator,
+    usuarioViewModel: UsuarioViewModel,
+    estanqueViewModel: EstanqueViewModel
+) {
     val usuario = usuarioViewModel.usuario
     val estanquesByUsuario = usuarioViewModel.estanquesByUsuario.value
     val errorMessage = remember { mutableStateOf<String?>(null) }
@@ -101,8 +108,31 @@ fun PondScreen(navigator: Navigator, usuarioViewModel: UsuarioViewModel, estanqu
 
 
 @Composable
-fun SensorDataItem(label: String, value: Int, imageName: String, color: Color, maxValue: Int) {
+fun SensorDataItem(
+    context: Context, // Añadimos el contexto aquí
+    label: String,
+    value: Float, // Valor actual del sensor
+    range: Pair<Float, Float>, // El rango permitido (min, max)
+    imageName: String,
+    color: Color,
+    maxValue: Int,
+    onAlert: (String) -> Unit,
+    sensorId: Int // Identificador único del sensor
+) {
     val showTooltip = remember { mutableStateOf(false) }
+    val (minRange, maxRange) = range
+
+    // Verificar si el valor del sensor está fuera del rango
+    if (value < minRange || value > maxRange) {
+        val alertMessage = "$label está fuera del rango ($minRange - $maxRange). Valor actual: $value"
+        onAlert(alertMessage)
+        Log.d("SensorDataItem", alertMessage)
+
+        // Aquí llamamos a la función para enviar la notificación
+        sendLocalNotification(context, "Alerta de Sensor", alertMessage, sensorId)
+    } else {
+        Log.d("SensorDataItem", "$label dentro del rango: $value (rango: $minRange - $maxRange)")
+    }
 
     Box(
         modifier = Modifier

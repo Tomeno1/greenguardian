@@ -10,6 +10,7 @@ data class Estanque(
     val rangoEc: String,
     val rangoLuz: String,
     val horarioRiego: String,
+    val rangoph: String,
     val idUsuario: Long
 )
 
@@ -21,9 +22,19 @@ data class EstanqueNoSQL(
 )
 
 @Serializable
+data class PromedioEstanques(
+    val humidity: Float,
+    val temperature: Float,
+    val ph: Float,
+    val ec: Float
+)
+
+@Serializable
 data class DeviceData(
-    var humidity: Int,
-    var temperature: Int
+    var humidity: Float,
+    var temperature: Float,
+    var ph: Float,
+    var ec: Float
 )
 
 @Serializable

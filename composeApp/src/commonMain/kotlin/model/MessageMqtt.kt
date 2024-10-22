@@ -3,6 +3,6 @@ package model
 import kotlinx.serialization.Serializable
 
 @Serializable
-enum class Estado {
-    INACTIVE, ACTIVE
-}
+data class MessageMqtt(
+    val message: String
+)

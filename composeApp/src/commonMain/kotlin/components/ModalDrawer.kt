@@ -67,12 +67,12 @@ import viewModel.UsuarioViewModel
 fun DrawerContent(
     currentRoute: String,
     onItemClick: (String) -> Unit,
-    userName: String,
     onLogoutClick: () -> Unit,
     isAdmin: Boolean,
     usuarioViewModel: UsuarioViewModel
 ) {
     val userName by remember { mutableStateOf(usuarioViewModel.usuario?.nombre ?: "Invitado")  }
+    val userEmail by remember { mutableStateOf(usuarioViewModel.usuario?.email ?: "Invitado")  }
     val scope = rememberCoroutineScope()
     // Registrar un lanzador de actividad para seleccionar imágenes
     val launcher = rememberLauncherForActivityResult(
@@ -190,7 +190,7 @@ fun DrawerContent(
             Spacer(modifier = Modifier.width(16.dp))
             Column(modifier = Modifier.background(Color.Transparent), verticalArrangement = Arrangement.Center) {
                 Text(text = userName, style = MaterialTheme.typography.h6, color = Color.White)
-                Text(text = "tsureda13@gmail.com", style = MaterialTheme.typography.body2, color = Color.Gray)
+                Text(text = userEmail, style = MaterialTheme.typography.body2, color = Color.Gray)
             }
         }
 

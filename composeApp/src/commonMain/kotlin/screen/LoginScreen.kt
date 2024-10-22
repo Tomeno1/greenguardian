@@ -147,12 +147,7 @@ fun LoginForm(
                         Log.d("Login", "Inicio de sesión exitoso")
                         usuarioViewModel.usuario?.let { usuario ->
                                 Log.d("Login", "Nombre: ${usuario.email}, Contraseña: ${usuario.pass}")
-                            // Navegación basada en el rol del usuario
-                            when (usuario.role) {
-                                "ADMIN" -> navigator.navigate("/home")
-                                "USER" -> navigator.navigate("/home")
-                                else -> navigator.navigate("/home")
-                            }
+                            navigator.navigate(("/home"))
                         }
                     }, { error ->
                         Log.d("Login", error)

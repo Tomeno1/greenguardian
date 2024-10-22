@@ -11,6 +11,7 @@ import data.UserService
 import kotlinx.coroutines.launch
 import model.AuthUsuario
 import model.EstanqueByUsuarioResponse
+import model.PromedioEstanques
 import model.ResponseHttp
 import model.Usuario
 import moe.tlaster.precompose.viewmodel.ViewModel
@@ -41,6 +42,11 @@ class UsuarioViewModel(private val tokenViewModel: TokenViewModel) : ViewModel()
     fun updateUserImageUri(newUri: Uri) {
         userImageUri = newUri
     }
+
+    // Variable para almacenar el promedio de estanques
+    var promedioEstanques by mutableStateOf<PromedioEstanques?>(null)
+        private set
+
 
     // Actualizar la información del usuario actual
     fun updateUser(newUsuario: Usuario) {
@@ -101,6 +107,31 @@ class UsuarioViewModel(private val tokenViewModel: TokenViewModel) : ViewModel()
             } catch (e: Exception) {
                 Log.e("UsuarioViewModel", "Error al cargar los estanques: ${e.message}")
                 onError("Error al cargar los estanques del usuario")
+            }
+        }
+    }
+
+    // Función para cargar el promedio de los estanques
+    fun loadPromedioEstanques(userId: Long, onError: (String) -> Unit = {}) {
+        val token = tokenViewModel.token
+
+        if (token.isNullOrBlank()) {
+            onError("Token de acceso inválido o no disponible")
+            return
+        }
+
+        viewModelScope.launch {
+            try {
+                val response = userService.getPromedioEstanques(token, userId)
+                if (response != null) {
+                    promedioEstanques = response
+                    Log.d("UsuarioViewModel", "Promedio de estanques cargado para el usuario $userId")
+                } else {
+                    onError("No se pudo obtener el promedio de los estanques")
+                }
+            } catch (e: Exception) {
+                Log.e("UsuarioViewModel", "Error al obtener el promedio de estanques: ${e.message}")
+                onError("Error al obtener el promedio de estanques")
             }
         }
     }

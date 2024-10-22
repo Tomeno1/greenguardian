@@ -16,6 +16,7 @@ import io.ktor.http.HttpHeaders
 import io.ktor.http.contentType
 import io.ktor.http.isSuccess
 import model.EstanqueByUsuarioResponse
+import model.PromedioEstanques
 import model.Usuario
 
 class UserService(private val client: HttpClient) {
@@ -92,4 +93,26 @@ class UserService(private val client: HttpClient) {
             null
         }
     }
+
+    suspend fun getPromedioEstanques(token: String, userId: Long): PromedioEstanques? {
+        return try {
+            val response: HttpResponse = client.get("$baseUrl/promedio-estanques/$userId") {
+                headers {
+                    append(HttpHeaders.Authorization, "Bearer $token")
+                    accept(ContentType.Application.Json)
+                }
+            }
+
+            if (response.status.isSuccess()) {
+                val responseBodyText = response.bodyAsText()
+                json.decodeFromString<PromedioEstanques>(responseBodyText)
+            } else {
+                null
+            }
+        } catch (e: Exception) {
+            // Manejo del error
+            null
+        }
+    }
+
 }

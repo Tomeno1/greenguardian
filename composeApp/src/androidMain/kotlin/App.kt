@@ -43,6 +43,7 @@ import androidx.compose.ui.unit.dp
 import components.DrawerContent
 import components.SetSystemBarsColor
 import data.HttpClientProvider
+import data.MqttService
 import data.OpenAIService
 import kotlinx.coroutines.launch
 import moe.tlaster.precompose.PreComposeApp
@@ -57,6 +58,7 @@ import screen.PondScreen
 import screen.SensorScreen
 import techminds.greenguardian.R
 import viewModel.EstanqueViewModel
+import viewModel.MqttViewModel
 import viewModel.TokenViewModel
 import viewModel.UsuarioViewModel
 
@@ -65,12 +67,19 @@ import viewModel.UsuarioViewModel
 fun App() {
     PreComposeApp {
         val navigator = rememberNavigator()
-        val openAIService = OpenAIService(HttpClientProvider.client)
+
+        // Crear las dependencias necesarias
+        val httpClient = HttpClientProvider.client
+        val openAIService = OpenAIService(httpClient)
+        val mqttService = MqttService(httpClient) // Crear el servicio MQTT
+
+        // Crear los ViewModels y pasar las dependencias necesarias
         val chatViewModel = viewModel { ChatViewModel(openAIService) }
-        val estanqueViewModel = viewModel { EstanqueViewModel(TokenViewModel()) }
         val tokenViewModel = viewModel { TokenViewModel() }
-        val userViewModel =
-            viewModel(keys = listOf(tokenViewModel)) { UsuarioViewModel(tokenViewModel) }
+        val mqttViewModel = viewModel { MqttViewModel(mqttService) } // Pasamos el mqttService
+        val estanqueViewModel = viewModel { EstanqueViewModel(tokenViewModel) }
+        val userViewModel = viewModel(keys = listOf(tokenViewModel)) { UsuarioViewModel(tokenViewModel) }
+
         var currentRoute by remember { mutableStateOf("/login") }
         val drawerState = rememberDrawerState(DrawerValue.Closed)
         val scope = rememberCoroutineScope()
@@ -97,8 +106,6 @@ fun App() {
                                     navigator.navigate(route)
                                 }
                             },
-                            userName = userViewModel.usuario?.nombre
-                                ?: "Guest",  // Pasa el nombre del usuario
                             onLogoutClick = {
                                 tokenViewModel.logout(
                                     onSuccess = {
@@ -211,7 +218,7 @@ fun App() {
                         scene(route = "/sensorScreen/{estanqueId}") { backStackEntry ->
                             val estanqueId = backStackEntry.path<Long>("estanqueId")
                             estanqueId?.let {
-                                SensorScreen(estanqueViewModel)  // Mostrar la pantalla de sensores
+                                SensorScreen(estanqueViewModel,mqttViewModel, userViewModel)  // Mostrar la pantalla de sensores
                             }
                         }
                         scene(route = "/camara") {

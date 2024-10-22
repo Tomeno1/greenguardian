@@ -12,7 +12,7 @@ import model.EstanqueNoSQL
 import moe.tlaster.precompose.viewmodel.ViewModel
 import moe.tlaster.precompose.viewmodel.viewModelScope
 
-class EstanqueViewModel(private val token: TokenViewModel) : ViewModel() {
+class EstanqueViewModel(private val tokenViewModel: TokenViewModel) : ViewModel() {
 
     init {
         Log.d("EstanqueViewModel", "EstanqueViewModel creado")
@@ -109,9 +109,10 @@ class EstanqueViewModel(private val token: TokenViewModel) : ViewModel() {
 
     // Actualizar un estanque SQL
     fun updateEstanque(idEstanque: Long, estanque: Estanque, onSuccess: () -> Unit, onError: (String) -> Unit) {
+        val token = tokenViewModel.token
         viewModelScope.launch {
             try {
-                val result = estanqueService.updateEstanque(idEstanque, estanque)
+                val result = token?.let { estanqueService.updateEstanque(it, idEstanque, estanque) }
                 if (result != null) {
                     val index = estanques.indexOfFirst { it.idEstanque == idEstanque }
                     if (index >= 0) {
