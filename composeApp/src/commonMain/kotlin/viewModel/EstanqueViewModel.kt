@@ -108,6 +108,7 @@ class EstanqueViewModel(private val tokenViewModel: TokenViewModel) : ViewModel(
     }
 
     // Actualizar un estanque SQL
+    // Actualizar un estanque SQL
     fun updateEstanque(idEstanque: Long, estanque: Estanque, onSuccess: () -> Unit, onError: (String) -> Unit) {
         val token = tokenViewModel.token
         viewModelScope.launch {
@@ -115,10 +116,18 @@ class EstanqueViewModel(private val tokenViewModel: TokenViewModel) : ViewModel(
                 val result = token?.let { estanqueService.updateEstanque(it, idEstanque, estanque) }
                 if (result != null) {
                     val index = estanques.indexOfFirst { it.idEstanque == idEstanque }
+
                     if (index >= 0) {
+                        // Actualizar el estanque en la lista de estanques
                         estanques[index] = result
                     }
-                    onSuccess()
+
+                    // También actualizar el estanque seleccionado si coincide con el ID que estamos actualizando
+                    if (selectedEstanque.value?.idEstanque == idEstanque) {
+                        selectedEstanque.value = result // Actualizamos el selectedEstanque
+                    }
+
+                    onSuccess() // Llamar al callback de éxito
                 } else {
                     onError("No se pudo actualizar el estanque")
                 }
@@ -128,6 +137,7 @@ class EstanqueViewModel(private val tokenViewModel: TokenViewModel) : ViewModel(
             }
         }
     }
+
 
     // Eliminar un estanque SQL
     fun deleteEstanque(idEstanque: Long, onSuccess: () -> Unit, onError: (String) -> Unit) {

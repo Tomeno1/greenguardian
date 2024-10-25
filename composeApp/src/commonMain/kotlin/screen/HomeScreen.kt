@@ -23,6 +23,7 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.AlertDialog
 import androidx.compose.material.Button
+import androidx.compose.material.ButtonDefaults
 import androidx.compose.material.Card
 import androidx.compose.material.Icon
 import androidx.compose.material.MaterialTheme
@@ -73,6 +74,7 @@ fun HomeScreen(
         modifier = Modifier
             .fillMaxSize()
             .background(Color.Transparent)
+            .padding(16.dp)
     ) {
 
         GreetingCard(userName = userName, usuarioViewModel = usuarioViewModel)
@@ -114,11 +116,11 @@ fun SolucionNutritiva(usuarioViewModel: UsuarioViewModel) {
         Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(8.dp),
+                .padding(vertical = 8.dp),
             horizontalArrangement = Arrangement.SpaceBetween, // Alinea los textos a los extremos
             verticalAlignment = Alignment.CenterVertically
         ) {
-            Text(
+            Text(modifier = Modifier.padding(vertical = 8.dp),
                 text = "Solución Nutritiva",
                 fontWeight = FontWeight.Bold,
                 style = MaterialTheme.typography.h6
@@ -134,7 +136,6 @@ fun SolucionNutritiva(usuarioViewModel: UsuarioViewModel) {
             modifier = Modifier
                 .fillMaxWidth()
                 .height(300.dp)
-                .padding(8.dp)
         ) {
             // Columna 1: Indicador semicircular (izquierda)
             Card(
@@ -190,7 +191,7 @@ fun SolucionNutritiva(usuarioViewModel: UsuarioViewModel) {
                                 color = Color.Gray
                             )
                             Text(
-                                text = String.format(Locale.US,"%.2f pH",promedioEstanques.ph),
+                                text = String.format(Locale.US, "%.2f pH", promedioEstanques.ph),
                                 style = MaterialTheme.typography.h6,
                                 fontWeight = FontWeight.Bold,
                                 color = Color.Black
@@ -201,7 +202,8 @@ fun SolucionNutritiva(usuarioViewModel: UsuarioViewModel) {
                                     .height(40.dp)
                             ) {
                                 val ph = promedioEstanques.ph
-                                val lineEnd = (ph / 14f) * size.width // Suponiendo un rango de pH 0-14
+                                val lineEnd =
+                                    (ph / 14f) * size.width // Suponiendo un rango de pH 0-14
                                 drawLine(
                                     color = Color.Red,
                                     start = Offset(0f, size.height / 2),
@@ -257,7 +259,10 @@ fun SolucionNutritiva(usuarioViewModel: UsuarioViewModel) {
                                 drawLine(
                                     color = Color(0xFF4CAF50),
                                     start = Offset(0f, size.height / 2),
-                                    end = Offset(lineEnd, size.height / 2),  // La longitud se ajusta al valor de EC
+                                    end = Offset(
+                                        lineEnd,
+                                        size.height / 2
+                                    ),  // La longitud se ajusta al valor de EC
                                     strokeWidth = 8f
                                 )
                             }
@@ -276,7 +281,6 @@ fun SolucionNutritiva(usuarioViewModel: UsuarioViewModel) {
         )
     }
 }
-
 
 
 @Composable
@@ -327,7 +331,7 @@ fun GreetingCard(userName: String, usuarioViewModel: UsuarioViewModel) {
     Row(
         modifier = Modifier
             .fillMaxWidth()
-            .padding(8.dp),
+            .padding(vertical = 8.dp),
         verticalAlignment = Alignment.CenterVertically
     ) {
         // Observamos el estado de la URI de la imagen en el ViewModel
@@ -413,9 +417,11 @@ fun HydroponicGuide() {
     Column(
         modifier = Modifier
             .fillMaxWidth()
-            .padding(8.dp)
+
+
     ) {
         Text(
+            modifier = Modifier.padding(vertical = 16.dp),
             text = "Guía para Cultivos Hidropónicos",
             style = MaterialTheme.typography.h6,
             fontWeight = FontWeight.Bold,
@@ -463,6 +469,7 @@ fun GuideStep(
             .fillMaxWidth()
             .clickable { onClick() }
             .padding(bottom = 8.dp)
+
     ) {
         Row(
             verticalAlignment = Alignment.CenterVertically,
@@ -488,27 +495,27 @@ fun GuideStep(
 fun PlantList(plants: List<Plant>, navigator: Navigator) {
 
     Row(
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(8.dp),
-        horizontalArrangement = Arrangement.SpaceBetween
+        modifier = Modifier.padding(vertical = 8.dp),
+        verticalAlignment = Alignment.CenterVertically
     ) {
         Text(
+            modifier = Modifier.weight(1f),
             text = "Plantas comunes para Hidroponía",
             style = MaterialTheme.typography.h6,
             fontWeight = FontWeight.Bold,
         )
-        Text(
-            text = "Ver más",
-            style = MaterialTheme.typography.body1,
-            fontWeight = FontWeight.Bold,
-            modifier = Modifier.clickable { navigator.navigate("/Plantas") }
-        )
+        Button(
+            shape = RoundedCornerShape(50),
+            onClick = {navigator.navigate("/Plantas")},
+            colors = ButtonDefaults.buttonColors(backgroundColor = Color.LightGray)
+        ){
+            Text(text = "Ver más", color = Color.DarkGray, fontWeight = FontWeight.Bold)
+        }
     }
     LazyRow(
         modifier = Modifier
             .fillMaxWidth()
-            .padding(8.dp)
+            .padding(vertical = 8.dp)
     ) {
         items(plants) { plant ->
             PlantCard(plant = plant)
@@ -524,6 +531,7 @@ fun PlantCard(plant: Plant) {
         modifier = Modifier
             .width(200.dp)
             .padding(end = 8.dp)
+
     ) {
         Column(
             modifier = Modifier.padding(8.dp),

@@ -10,7 +10,7 @@ data class Estanque(
     val rangoEc: String,
     val rangoLuz: String,
     val horarioRiego: String,
-    val rangoph: String,
+    val rangoPh: String,
     val idUsuario: Long
 )
 

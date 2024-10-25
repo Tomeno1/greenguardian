@@ -26,6 +26,7 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -120,19 +121,28 @@ fun SensorDataItem(
     sensorId: Int // Identificador único del sensor
 ) {
     val showTooltip = remember { mutableStateOf(false) }
+    var isNotificationSent by remember { mutableStateOf(false) }
     val (minRange, maxRange) = range
 
-    // Verificar si el valor del sensor está fuera del rango
+// Verificar si el valor del sensor está fuera del rango
     if (value < minRange || value > maxRange) {
-        val alertMessage = "$label está fuera del rango ($minRange - $maxRange). Valor actual: $value"
-        onAlert(alertMessage)
-        Log.d("SensorDataItem", alertMessage)
+        if (!isNotificationSent) {  // Si aún no se ha enviado la notificación
+            val alertMessage = "$label está fuera del rango ($minRange - $maxRange). Valor actual: $value"
+            onAlert(alertMessage)
+            Log.d("SensorDataItem", alertMessage)
 
-        // Aquí llamamos a la función para enviar la notificación
-        sendLocalNotification(context, "Alerta de Sensor", alertMessage, sensorId)
+            // Enviar la notificación
+            sendLocalNotification(context, "Alerta de Sensor", alertMessage, sensorId)
+
+            // Marcar que ya se envió la notificación
+            isNotificationSent = true
+        }
     } else {
+        // Si el valor del sensor vuelve al rango normal, resetear el estado
+        isNotificationSent = false
         Log.d("SensorDataItem", "$label dentro del rango: $value (rango: $minRange - $maxRange)")
     }
+
 
     Box(
         modifier = Modifier

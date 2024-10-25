@@ -90,6 +90,7 @@ class UsuarioViewModel(private val tokenViewModel: TokenViewModel) : ViewModel()
     fun loadEstanquesByUsuario(userId: Long, onError: (String) -> Unit = {}) {
         val token = tokenViewModel.token
 
+
         if (token.isNullOrBlank()) {
             onError("Token de acceso inválido o no disponible")
             return
@@ -102,8 +103,10 @@ class UsuarioViewModel(private val tokenViewModel: TokenViewModel) : ViewModel()
                     estanquesByUsuario.value = response
                     Log.d("UsuarioViewModel", "Estanques cargados para el usuario $userId")
                 } else {
+                    Log.e("UsuarioViewModel", "La respuesta de estanques es nula para el usuario $userId")
                     onError("No se pudieron cargar los estanques del usuario")
                 }
+
             } catch (e: Exception) {
                 Log.e("UsuarioViewModel", "Error al cargar los estanques: ${e.message}")
                 onError("Error al cargar los estanques del usuario")

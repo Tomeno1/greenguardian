@@ -1,5 +1,6 @@
 package data
 
+import android.util.Log
 import data.JsonProvider.json
 import io.ktor.client.HttpClient
 import io.ktor.client.request.accept
@@ -90,6 +91,7 @@ class UserService(private val client: HttpClient) {
                 null
             }
         } catch (e: Exception) {
+            Log.e("UserService", "Excepción al obtener estanques: ${e.message}")
             null
         }
     }
