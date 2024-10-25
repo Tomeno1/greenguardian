@@ -41,15 +41,15 @@ val DarkRed = Color(0xFF8B0000) // Rojo oscuro
 fun EstanqueCard(
     estanqueName: String,
     plantImage: Int,
-    status: Status,
+    //status: Status,
     onClick: () -> Unit,
     buttons: @Composable () -> Unit
 ) {
-    val statusColor = when (status) {
+    /*val statusColor = when (status) {
         Status.GOOD -> DarkGreen
         Status.PRECAUTION -> DarkYellow
         Status.WARNING -> DarkRed
-    }
+    }*/
 
     Card(
         shape = RoundedCornerShape(8.dp),
@@ -81,7 +81,7 @@ fun EstanqueCard(
                 Box(
                     modifier = Modifier
                         .size(16.dp)
-                        .background(statusColor, shape = CircleShape)
+                       // .background(statusColor, shape = CircleShape)
                         .align(Alignment.TopEnd)
                 )
             }
@@ -93,12 +93,12 @@ fun EstanqueCard(
                 color = Color.Black,
                 modifier = Modifier.align(Alignment.Start)
             )
-            Text(
+           /* Text(
                 text = "Estado: ${status.name}",
                 fontSize = 14.sp,
                 color = statusColor,
                 modifier = Modifier.align(Alignment.Start)
-            )
+            )*/
             Spacer(modifier = Modifier.height(8.dp))
             buttons()
         }

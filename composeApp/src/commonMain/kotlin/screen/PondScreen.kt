@@ -84,9 +84,9 @@ fun PondScreen(
                 items(estanquesByUsuario.listaEstanque.size) { index ->
                     val estanque = estanquesByUsuario.listaEstanque[index]
                     EstanqueCard(
-                        estanqueName = estanque.idEstanque.toString(),
+                        estanqueName = "Estanque: ${estanque.idEstanque.toString()}",
                         plantImage = getImageResourceByName("lechuga"),
-                        status = Status.GOOD,
+                       // status = Status.GOOD,
                         onClick = {
                             // Cargar los datos de NoSQL al hacer clic en el estanque
                             estanqueViewModel.loadEstanqueNoSQLById(estanque.idEstanque.toInt())
