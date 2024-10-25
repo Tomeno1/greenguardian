@@ -18,6 +18,7 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.AlertDialog
 import androidx.compose.material.Button
+import androidx.compose.material.ButtonDefaults
 import androidx.compose.material.Card
 import androidx.compose.material.Icon
 import androidx.compose.material.MaterialTheme
@@ -168,8 +169,10 @@ fun SensorScreen(
             modifier = Modifier
                 .padding(8.dp)
                 .fillMaxWidth()
+            ,
+            colors = ButtonDefaults.buttonColors(backgroundColor = Color(0xFF38D13F))
         ) {
-            Text("Configurar Rangos de Sensores")
+            Text("Configurar Rangos de Sensores", color = Color.White)
         }
     }
 }
