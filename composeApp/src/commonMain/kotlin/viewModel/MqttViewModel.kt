@@ -1,6 +1,6 @@
 package viewModel
 
-import data.MqttService
+import service.MqttService
 import kotlinx.coroutines.launch
 import model.MessageMqtt
 import moe.tlaster.precompose.viewmodel.ViewModel

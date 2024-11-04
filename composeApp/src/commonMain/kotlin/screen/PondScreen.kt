@@ -8,10 +8,7 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
-import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.grid.GridCells
@@ -40,13 +37,8 @@ import components.CustomButton
 import components.EstanqueCard
 import components.getImageResourceByName
 import components.getImageRsourceSensorByName
-import components.sendLocalNotification
-import model.Estanque
-import model.EstanqueNoSQL
-import model.Status
 import moe.tlaster.precompose.navigation.Navigator
 import viewModel.EstanqueViewModel
-import viewModel.TokenViewModel
 import viewModel.UsuarioViewModel
 
 @Composable
@@ -86,10 +78,13 @@ fun PondScreen(
                     EstanqueCard(
                         estanqueName = "Estanque: ${estanque.idEstanque.toString()}",
                         plantImage = getImageResourceByName("lechuga"),
-                       // status = Status.GOOD,
+                        // status = Status.GOOD,
                         onClick = {
+                            // Registro en consola
+                            Log.d("EstanqueClick", "Estanque ${estanque.idEstanque} seleccionado")
                             // Cargar los datos de NoSQL al hacer clic en el estanque
                             estanqueViewModel.loadEstanqueNoSQLById(estanque.idEstanque.toInt())
+                            estanqueViewModel.loadEstanqueById(estanque.idEstanque)
                             // Navegar a la pantalla de sensores pasando el ID del estanque
                             navigator.navigate("/sensorScreen/${estanque.idEstanque}")
                         },
@@ -110,29 +105,29 @@ fun PondScreen(
 
 @Composable
 fun SensorDataItem(
-    context: Context, // Añadimos el contexto aquí
+    context: Context,
     label: String,
     value: Float, // Valor actual del sensor
     range: Pair<Float, Float>, // El rango permitido (min, max)
     imageName: String,
     color: Color,
-    maxValue: Int,
-    onAlert: (String) -> Unit,
-    sensorId: Int // Identificador único del sensor
+    sensorId: Int
+
 ) {
     val showTooltip = remember { mutableStateOf(false) }
     var isNotificationSent by remember { mutableStateOf(false) }
     val (minRange, maxRange) = range
 
+    val progress = ((value - minRange) / (maxRange - minRange)).coerceIn(0f, 1f)
+
 // Verificar si el valor del sensor está fuera del rango
     if (value < minRange || value > maxRange) {
         if (!isNotificationSent) {  // Si aún no se ha enviado la notificación
-            val alertMessage = "$label está fuera del rango ($minRange - $maxRange). Valor actual: $value"
-            onAlert(alertMessage)
+            val alertMessage =
+                "$label está fuera del rango ($minRange - $maxRange). Valor actual: $value"
             Log.d("SensorDataItem", alertMessage)
 
             // Enviar la notificación
-            sendLocalNotification(context, "Alerta de Sensor", alertMessage, sensorId)
 
             // Marcar que ya se envió la notificación
             isNotificationSent = true
@@ -161,7 +156,7 @@ fun SensorDataItem(
                 modifier = Modifier.fillMaxSize()
             ) {
                 CircularProgressWithText(
-                    progress = value.toFloat() / maxValue.toFloat(),
+                    progress = progress,
                     text = "${value.toInt()}",
                     color = color
                 )

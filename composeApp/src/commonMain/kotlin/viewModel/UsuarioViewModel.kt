@@ -5,9 +5,9 @@ import android.util.Log
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
-import data.AuthService
-import data.HttpClientProvider
-import data.UserService
+import service.AuthService
+import service.HttpClientProvider
+import service.UserService
 import kotlinx.coroutines.launch
 import model.AuthUsuario
 import model.EstanqueByUsuarioResponse
@@ -41,6 +41,10 @@ class UsuarioViewModel(private val tokenViewModel: TokenViewModel) : ViewModel()
     // Actualizar la URI de la imagen del usuario
     fun updateUserImageUri(newUri: Uri) {
         userImageUri = newUri
+    }
+
+    fun clearUserImage() {
+        userImageUri = null // Limpia la imagen del usuario
     }
 
     // Variable para almacenar el promedio de estanques

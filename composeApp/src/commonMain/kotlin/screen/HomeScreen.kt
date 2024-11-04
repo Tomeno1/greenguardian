@@ -54,6 +54,9 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import coil.compose.rememberAsyncImagePainter
+import components.getImageResourceByName
+import data.HydroponicGuideDataManager
+import data.PlantDataManager
 import model.GuideStepData
 import model.Plant
 import moe.tlaster.precompose.navigation.Navigator
@@ -69,6 +72,7 @@ fun HomeScreen(
 ) {
     // Obtenemos el nombre del usuario del ViewModel de forma reactiva
     val userName by remember { mutableStateOf(usuarioViewModel.usuario?.nombre ?: "Invitado") }
+    val lastName by remember { mutableStateOf(usuarioViewModel.usuario?.apellido ?: "Invitado") }
 
     Column(
         modifier = Modifier
@@ -77,7 +81,7 @@ fun HomeScreen(
             .padding(16.dp)
     ) {
 
-        GreetingCard(userName = userName, usuarioViewModel = usuarioViewModel)
+        GreetingCard(userName = userName, lastName = lastName ,usuarioViewModel = usuarioViewModel)
         LazyColumn(
             modifier = Modifier
                 .fillMaxSize()
@@ -87,7 +91,7 @@ fun HomeScreen(
                 SolucionNutritiva(usuarioViewModel)
             }
             item {
-                PlantApp(navigator)
+                PlantList(plants = PlantDataManager.plants, navigator = navigator)
             }
             item {
                 HydroponicGuide() // Sin LazyColumn interno
@@ -120,15 +124,11 @@ fun SolucionNutritiva(usuarioViewModel: UsuarioViewModel) {
             horizontalArrangement = Arrangement.SpaceBetween, // Alinea los textos a los extremos
             verticalAlignment = Alignment.CenterVertically
         ) {
-            Text(modifier = Modifier.padding(vertical = 8.dp),
+            Text(
+                modifier = Modifier.padding(vertical = 8.dp),
                 text = "Solución Nutritiva",
                 fontWeight = FontWeight.Bold,
                 style = MaterialTheme.typography.h6
-            )
-            Text(
-                text = "Última actualización: 30 Dic. 10:35",
-                style = MaterialTheme.typography.body2,
-                color = Color.Gray
             )
         }
 
@@ -327,15 +327,16 @@ fun SemicircularProgressIndicator(
 }
 
 @Composable
-fun GreetingCard(userName: String, usuarioViewModel: UsuarioViewModel) {
+fun GreetingCard(userName: String,lastName: String, usuarioViewModel: UsuarioViewModel) {
+    // Observamos el estado de la URI de la imagen en el ViewModel
+    val imageUri = usuarioViewModel.userImageUri
     Row(
         modifier = Modifier
             .fillMaxWidth()
             .padding(vertical = 8.dp),
         verticalAlignment = Alignment.CenterVertically
     ) {
-        // Observamos el estado de la URI de la imagen en el ViewModel
-        val imageUri by remember { mutableStateOf(usuarioViewModel.userImageUri) }
+
 
         // Mostrar la imagen seleccionada o el ícono predeterminado
         if (imageUri != null) {
@@ -373,7 +374,7 @@ fun GreetingCard(userName: String, usuarioViewModel: UsuarioViewModel) {
                 color = Color.Gray
             )
             Text(
-                text = userName, // Nombre del usuario
+                text = "$userName $lastName", // Nombre del usuario
                 style = MaterialTheme.typography.h6.copy(fontWeight = FontWeight.Bold)
             )
         }
@@ -382,43 +383,10 @@ fun GreetingCard(userName: String, usuarioViewModel: UsuarioViewModel) {
 
 @Composable
 fun HydroponicGuide() {
-    val guideSteps = listOf(
-        GuideStepData(
-            stepNumber = 1,
-            title = "Preparación del Sistema",
-            description = "Elige un sistema hidropónico adecuado para el tipo de plantas que deseas cultivar. Los sistemas populares incluyen el de flujo y reflujo, NFT (película de nutrientes) y el de raíz flotante.",
-            icon = Icons.Default.Build,
-            iconTint = Color(0xFF3F51B5) // Azul
-        ),
-        GuideStepData(
-            stepNumber = 2,
-            title = "Selección de Plantas",
-            description = "Selecciona plantas que se adapten bien a la hidroponía, como lechugas, espinacas, fresas o hierbas aromáticas. Asegúrate de que las semillas sean de buena calidad.",
-            icon = Icons.Default.Eco,
-            iconTint = Color(0xFF4CAF50) // Verde
-        ),
-        GuideStepData(
-            stepNumber = 3,
-            title = "Preparar la Solución Nutritiva",
-            description = "Mezcla la solución nutritiva siguiendo las instrucciones del fabricante, ajustando el pH al nivel adecuado (generalmente entre 5.5 y 6.5). La concentración de nutrientes también debe ser controlada.",
-            icon = Icons.Default.WaterDrop,
-            iconTint = Color(0xFF2196F3) // Azul
-        ),
-        GuideStepData(
-            stepNumber = 4,
-            title = "Monitoreo y Mantenimiento",
-            description = "Verifica regularmente el pH, la conductividad eléctrica (EC) y la temperatura del agua. Asegúrate de limpiar el sistema y cambiar la solución nutritiva periódicamente.",
-            icon = Icons.Default.CheckCircle,
-            iconTint = Color(0xFFFFA000) // Naranja
-        )
-    )
     var selectedStep by remember { mutableStateOf<GuideStepData?>(null) }
 
     Column(
-        modifier = Modifier
-            .fillMaxWidth()
-
-
+        modifier = Modifier.fillMaxWidth()
     ) {
         Text(
             modifier = Modifier.padding(vertical = 16.dp),
@@ -427,8 +395,8 @@ fun HydroponicGuide() {
             fontWeight = FontWeight.Bold,
         )
 
-        // Mostrar los pasos de la guía sin LazyColumn
-        guideSteps.forEach { step ->
+        // Usamos los pasos de la guía del DataManager
+        HydroponicGuideDataManager.guideSteps.forEach { step ->
             GuideStep(
                 title = step.title,
                 icon = step.icon,
@@ -440,21 +408,48 @@ fun HydroponicGuide() {
 
     selectedStep?.let { step ->
         AlertDialog(
-            onDismissRequest = { selectedStep = null }, // Cerrar el diálogo al hacer clic fuera
+            onDismissRequest = { selectedStep = null },
             title = {
-                Text(text = step.title)
+                Text(
+                    text = step.title,
+                    style = MaterialTheme.typography.h6.copy(fontWeight = FontWeight.Bold),
+                    color = Color(0xFF1A1A1A) // Color de título más oscuro
+                )
             },
             text = {
-                Text(text = step.description)
+                Column(
+                    modifier = Modifier
+                        .padding(vertical = 8.dp)
+                        .fillMaxWidth()
+                ) {
+                    Text(
+                        text = step.description,
+                        style = MaterialTheme.typography.body1,
+                        color = Color(0xFF4D4D4D) // Color de texto más tenue
+                    )
+                }
             },
             confirmButton = {
-                Button(onClick = { selectedStep = null }) {
-                    Text("Cerrar")
+                Button(
+                    onClick = { selectedStep = null },
+                    colors = ButtonDefaults.buttonColors(backgroundColor = Color(0xFF38C93E)),
+                    shape = RoundedCornerShape(8.dp), // Botón con bordes redondeados
+                    modifier = Modifier.padding(horizontal = 8.dp)
+                ) {
+                    Text(
+                        text = "Cerrar",
+                        color = Color.White,
+                        style = MaterialTheme.typography.button.copy(fontWeight = FontWeight.SemiBold)
+                    )
                 }
-            }
+            },
+            backgroundColor = Color.White,
+            shape = RoundedCornerShape(12.dp), // Diálogo con bordes suavemente redondeados
+            modifier = Modifier.padding(16.dp) // Espacio alrededor del diálogo
         )
     }
 }
+
 
 @Composable
 fun GuideStep(
@@ -493,44 +488,48 @@ fun GuideStep(
 
 @Composable
 fun PlantList(plants: List<Plant>, navigator: Navigator) {
-
     Row(
         modifier = Modifier.padding(vertical = 8.dp),
         verticalAlignment = Alignment.CenterVertically
     ) {
         Text(
             modifier = Modifier.weight(1f),
-            text = "Plantas comunes para Hidroponía",
+            text = "Plantas Comunes para Hidroponía",
             style = MaterialTheme.typography.h6,
             fontWeight = FontWeight.Bold,
         )
         Button(
             shape = RoundedCornerShape(50),
-            onClick = {navigator.navigate("/Plantas")},
+            onClick = { navigator.navigate("/plantList") }, // Navegar a la lista completa
             colors = ButtonDefaults.buttonColors(backgroundColor = Color.LightGray)
-        ){
+        ) {
             Text(text = "Ver más", color = Color.DarkGray, fontWeight = FontWeight.Bold)
         }
     }
+
     LazyRow(
         modifier = Modifier
             .fillMaxWidth()
             .padding(vertical = 8.dp)
     ) {
-        items(plants) { plant ->
-            PlantCard(plant = plant)
+        items(plants.take(6)) { plant ->
+            PlantCard(plant = plant) {
+                navigator.navigate("/plantDetail/${plant.name}")
+            }
         }
     }
 }
 
+
 @Composable
-fun PlantCard(plant: Plant) {
+fun PlantCard(plant: Plant, onClick: () -> Unit) {
     Card(
         shape = RoundedCornerShape(8.dp),
         elevation = 4.dp,
         modifier = Modifier
             .width(200.dp)
-            .padding(end = 8.dp)
+            .padding(vertical = 8.dp, horizontal = 8.dp)
+            .clickable { onClick() }
 
     ) {
         Column(
@@ -552,53 +551,4 @@ fun PlantCard(plant: Plant) {
         }
     }
 }
-
-@Composable
-fun PlantApp(navigator: Navigator) {
-    // Mostrar la lista de plantas
-    val plants = listOf(
-        Plant(
-            name = "Lechuga",
-            description = "La lechuga es ideal para sistemas hidropónicos debido a su rápido crecimiento y facilidad de cultivo.",
-            imageUrl = "https://png.pngtree.com/png-clipart/20201208/original/pngtree-a-ripe-green-lettuce-png-image_5508901.jpg"
-        ),
-        Plant(
-            name = "Albahaca",
-            description = "La albahaca es una planta aromática popular en la hidroponía, utilizada para condimentar alimentos.",
-            imageUrl = "https://ewpszg5hrx3.exactdn.com/wp-content/uploads/2021/01/Albahaca.png?strip=all&lossy=1&ssl=1"
-        ),
-        Plant(
-            name = "Cilantro",
-            description = "El cilantro es una planta aromática ampliamente utilizada en la hidroponía para condimentar alimentos.",
-            imageUrl = "https://static.vecteezy.com/system/resources/previews/031/760/209/non_2x/coriander-with-ai-generated-free-png.png"
-        ),
-        Plant(
-            name = "Cebolla",
-            description = "La cebolla es una planta aromática utilizada en la hidroponía para condimentar alimentos.",
-            imageUrl = "https://www.frutasbosquemar.cl/wp-content/uploads/2020/06/580b57fcd9996e24bc43c21d.png"
-        ),
-        Plant(
-            name = "Espinaca",
-            description = "La espinaca es una planta aromática utilizada en la hidroponía para condimentar alimentos.",
-            imageUrl = "https://static.vecteezy.com/system/resources/previews/035/594/780/non_2x/ai-generated-fresh-spinach-leaves-isolated-on-transparent-background-free-png.png"
-        ),
-        Plant(
-            name = "Tomate",
-            description = "El tomate es una planta aromática utilizada en la hidroponía para condimentar alimentos. ",
-            imageUrl = "https://static.vecteezy.com/system/resources/previews/028/882/790/original/tomato-tomato-red-tomato-with-transparent-background-ai-generated-free-png.png"
-        ),
-
-
-        // Agrega más plantas aquí
-    )
-    PlantList(plants = plants, navigator = navigator)
-}
-
-@Preview(showBackground = true)
-@Composable
-fun PreviewSimpleDashboardLayout() {
-    GreetingCard("prueba", UsuarioViewModel(tokenViewModel = TokenViewModel()))
-
-}
-
 

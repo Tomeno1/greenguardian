@@ -8,8 +8,14 @@ fun getImageResourceByName(imageName: String): Int {
         "cilantro" -> R.drawable.cilantro
         "cebolla" -> R.drawable.cebolla
         "tomate" -> R.drawable.tomate
-        "lavanda" -> R.drawable.lavanda
+        "espinaca" -> R.drawable.espinaca
         "albahaca" -> R.drawable.albahaca
+        "kale" -> R.drawable.kale
+        "acelga" -> R.drawable.acelga
+        "rucula" -> R.drawable.rucula
+        "perejil" -> R.drawable.perejil
+        "menta" -> R.drawable.menta
+        "apio" -> R.drawable.apio
         else -> R.drawable.lechuga // Imagen por defecto
     }
 }

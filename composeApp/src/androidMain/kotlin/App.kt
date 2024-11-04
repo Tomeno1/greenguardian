@@ -1,10 +1,3 @@
-/*import screen.AdminScreen
-import screen.CreateEstanqueScreen
-import screen.CreateUserScreen
-import screen.EditEstanqueScreen
-import screen.EditUserScreen
-import screen.ListEstanquesScreen*/
-//import viewModel.EstanqueViewModel
 import android.util.Log
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
@@ -42,9 +35,10 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
 import components.DrawerContent
 import components.SetSystemBarsColor
-import data.HttpClientProvider
-import data.MqttService
-import data.OpenAIService
+import data.PlantDataManager
+import service.HttpClientProvider
+import service.MqttService
+import service.OpenAIService
 import kotlinx.coroutines.launch
 import moe.tlaster.precompose.PreComposeApp
 import moe.tlaster.precompose.navigation.NavHost
@@ -54,6 +48,8 @@ import moe.tlaster.precompose.viewmodel.viewModel
 import org.jetbrains.compose.ui.tooling.preview.Preview
 import screen.CamaraScreen
 import screen.LoginScreen
+import screen.PlantDetailScreen
+import screen.PlantListScreen
 import screen.PondScreen
 import screen.SensorScreen
 import techminds.greenguardian.R
@@ -79,7 +75,6 @@ fun App() {
         val mqttViewModel = viewModel { MqttViewModel(mqttService) } // Pasamos el mqttService
         val estanqueViewModel = viewModel { EstanqueViewModel(tokenViewModel) }
         val userViewModel = viewModel(keys = listOf(tokenViewModel)) { UsuarioViewModel(tokenViewModel) }
-
         var currentRoute by remember { mutableStateOf("/login") }
         val drawerState = rememberDrawerState(DrawerValue.Closed)
         val scope = rememberCoroutineScope()
@@ -95,36 +90,21 @@ fun App() {
             drawerState = drawerState,
             gesturesEnabled = currentRoute != "/login" && userViewModel.usuario != null,
             drawerContent = {
-                if (userViewModel.usuario != null) {
-                    ModalDrawerSheet {
-                        DrawerContent(
-                            currentRoute = currentRoute,
-                            onItemClick = { route ->
-                                scope.launch {
-                                    drawerState.close()  // Cierra el drawer al seleccionar una ruta
-                                    currentRoute = route
-                                    navigator.navigate(route)
-                                }
-                            },
-                            onLogoutClick = {
-                                tokenViewModel.logout(
-                                    onSuccess = {
-                                        scope.launch {
-                                            drawerState.close()
-                                            currentRoute = "/login"
-                                            navigator.navigate("/login")
-                                        }
-                                    },
-                                    onError = { errorMessage ->
-                                        Log.d("App", "Error al cerrar sesion: $errorMessage")
-                                    }
-                                )
-                            },
-                            isAdmin = userViewModel.usuario?.role == "ADMIN",
-                            usuarioViewModel = userViewModel
-                        )
-                    }
-                }
+                DrawerContent(
+                    selectedItem = currentRoute,
+                    onItemSelected = { item ->
+                        currentRoute = item
+                        scope.launch { drawerState.close() }
+                        navigator.navigate(item)
+                    },
+                    onLogout = {
+                        tokenViewModel.clearToken()
+                        userViewModel.clearUserImage()
+                        navigator.navigate("/login")
+                        scope.launch { drawerState.close() }
+                    },
+                    usuarioViewModel = userViewModel
+                )
             },
             content = {
                 Scaffold(
@@ -211,6 +191,18 @@ fun App() {
                             currentRoute = "/home"
                             HomeScreen(navigator, userViewModel)
                         }
+                        scene(route = "/plantList") {
+                            currentRoute = "/plantList"
+                            PlantListScreen(navigator = navigator)
+                        }
+                        scene(route = "/plantDetail/{plantName}") { backStackEntry ->
+                            currentRoute = "/plantDetail"
+                            val plantName = backStackEntry.path<String>("plantName")
+                            val plant = PlantDataManager.getPlantByName(plantName ?: "")
+                            plant?.let {
+                                PlantDetailScreen(plant = it, onBack = { navigator.popBackStack() })
+                            }
+                        }
                        scene(route = "/ponds") {
                             currentRoute = "/ponds"
                             PondScreen(navigator, userViewModel, estanqueViewModel)
@@ -218,7 +210,7 @@ fun App() {
                         scene(route = "/sensorScreen/{estanqueId}") { backStackEntry ->
                             val estanqueId = backStackEntry.path<Long>("estanqueId")
                             estanqueId?.let {
-                                SensorScreen(estanqueViewModel,mqttViewModel, userViewModel)  // Mostrar la pantalla de sensores
+                                SensorScreen(estanqueViewModel,mqttViewModel)  // Mostrar la pantalla de sensores
                             }
                         }
                         scene(route = "/camara") {

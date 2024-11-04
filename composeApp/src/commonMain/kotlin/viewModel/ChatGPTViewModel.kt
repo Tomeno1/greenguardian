@@ -1,7 +1,6 @@
 import android.util.Log
 import androidx.compose.runtime.mutableStateListOf
-import data.HttpClientProvider
-import data.OpenAIService
+import service.OpenAIService
 import kotlinx.coroutines.launch
 import model.MessageinBubble
 import moe.tlaster.precompose.viewmodel.ViewModel

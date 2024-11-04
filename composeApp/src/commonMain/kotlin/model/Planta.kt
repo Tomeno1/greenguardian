@@ -3,5 +3,10 @@ package model
 data class Plant(
     val name: String,
     val description: String,
-    val imageUrl: String // URL de la imagen de la planta
+    val imageUrl: Int,
+    val recommendations: String,
+    val phMin: Double,
+    val phMax: Double,
+    val tempMin: Int,
+    val tempMax: Int
 )

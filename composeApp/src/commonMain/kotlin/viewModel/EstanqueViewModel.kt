@@ -3,9 +3,9 @@ package viewModel
 import android.util.Log
 import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
-import data.EstanqueNoSQLService
-import data.EstanqueService
-import data.HttpClientProvider
+import service.EstanqueNoSQLService
+import service.EstanqueService
+import service.HttpClientProvider
 import kotlinx.coroutines.launch
 import model.Estanque
 import model.EstanqueNoSQL
@@ -55,10 +55,23 @@ class EstanqueViewModel(private val tokenViewModel: TokenViewModel) : ViewModel(
     // Cargar un estanque SQL por ID
     fun loadEstanqueById(idEstanque: Long) {
         viewModelScope.launch {
+            Log.d("EstanqueViewModel", "Iniciando carga de estanque con ID: $idEstanque")
+
             try {
-                val result = estanqueService.getEstanqueById(idEstanque)
+                // Supón que tienes el token almacenado en `tokenViewModel.token`
+                val token = tokenViewModel.token
+                if (token == null) {
+                    Log.e("EstanqueViewModel", "Token no disponible")
+                    return@launch
+                }
+
+                // Llama a `getEstanqueById` con el token
+                val result = estanqueService.getEstanqueById(token, idEstanque)
                 if (result != null) {
                     selectedEstanque.value = result
+                    Log.d("EstanqueViewModel", "Estanque cargado: $result")
+                } else {
+                    Log.d("EstanqueViewModel", "No se encontró el estanque con ID: $idEstanque")
                 }
             } catch (e: Exception) {
                 Log.e("EstanqueViewModel", "Error al cargar el estanque: ${e.message}")
@@ -66,9 +79,12 @@ class EstanqueViewModel(private val tokenViewModel: TokenViewModel) : ViewModel(
         }
     }
 
+
     fun loadEstanqueNoSQLById(idEstanque: Int) {
         viewModelScope.launch {
-            // Limpiar el estado anterior antes de cargar el nuevo estanque
+            Log.d("EstanqueViewModel", "Iniciando carga de Estanque NoSQL con ID: $idEstanque") // Registro al iniciar
+
+            // Limpiar el estado anterior
             selectedEstanqueNoSQL.value = null
             errorMessage.value = null
 
@@ -107,7 +123,6 @@ class EstanqueViewModel(private val tokenViewModel: TokenViewModel) : ViewModel(
         }
     }
 
-    // Actualizar un estanque SQL
     // Actualizar un estanque SQL
     fun updateEstanque(idEstanque: Long, estanque: Estanque, onSuccess: () -> Unit, onError: (String) -> Unit) {
         val token = tokenViewModel.token

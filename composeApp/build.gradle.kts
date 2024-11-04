@@ -8,6 +8,8 @@ plugins {
     alias(libs.plugins.jetbrainsCompose)
     alias(libs.plugins.compose.compiler)
     kotlin("plugin.serialization") version "2.0.0"
+    id("com.google.gms.google-services")
+
 }
 
 kotlin {
@@ -26,6 +28,7 @@ kotlin {
             implementation(compose.preview)
             implementation(libs.androidx.activity.compose)
             implementation("io.ktor:ktor-client-android:$ktorVersion")
+
         }
         commonMain.dependencies {
             implementation(compose.runtime)
@@ -43,6 +46,9 @@ kotlin {
             implementation("io.ktor:ktor-client-cio:$ktorVersion")
             implementation("io.ktor:ktor-client-auth:$ktorVersion")
             implementation("androidx.compose.material3:material3:1.3.0")
+            implementation(project.dependencies.platform("com.google.firebase:firebase-bom:33.5.1"))
+            implementation("com.google.firebase:firebase-messaging-ktx")
+            implementation ("com.google.accompanist:accompanist-permissions:0.36.0")
             implementation("io.coil-kt:coil-compose:2.1.0")
             api(compose.foundation)
             api(compose.animation)
