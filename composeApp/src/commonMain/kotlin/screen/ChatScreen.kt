@@ -31,6 +31,7 @@ import androidx.compose.ui.unit.dp
 import components.CustomButton
 import kotlinx.coroutines.launch
 import model.MessageinBubble
+import viewModel.ChatViewModel
 
 @Composable
 fun ChatScreen(chatViewModel: ChatViewModel) {

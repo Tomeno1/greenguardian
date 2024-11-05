@@ -83,7 +83,7 @@ fun DrawerContent(
             ItemNavigation("/home", "Home", Icons.Default.Home, Icons.Outlined.Home),
             ItemNavigation("/ponds", "Estanques", Icons.Default.Water, Icons.Outlined.Water),
             ItemNavigation("/plantList", "Plantas", Icons.Default.Eco, Icons.Outlined.Eco),
-            ItemNavigation("/tarea", "Tareas", Icons.Default.Task, Icons.Outlined.Task)
+            ItemNavigation("/tareas", "Tareas", Icons.Default.Task, Icons.Outlined.Task)
         ),
         "Asistencia" to listOf(
             ItemNavigation(

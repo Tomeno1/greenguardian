@@ -1,3 +1,5 @@
+package viewModel
+
 import android.util.Log
 import androidx.compose.runtime.mutableStateListOf
 import service.OpenAIService
@@ -9,7 +11,7 @@ import moe.tlaster.precompose.viewmodel.viewModelScope
 class ChatViewModel(private val openAIService: OpenAIService) : ViewModel() {
 
     init {
-        Log.d("ChatViewModel", "ChatViewModel creado")
+        Log.d("viewModel.ChatViewModel", "viewModel.ChatViewModel creado")
     }
 
     // Lista de mensajes para el chat
@@ -64,7 +66,7 @@ class ChatViewModel(private val openAIService: OpenAIService) : ViewModel() {
                         val result = openAIService.getResponse(followUpPrompt)
                         addBotMessage(result)
                     } catch (e: Exception) {
-                        Log.d("ChatViewModel", "Error al obtener más información sobre $lastResponseTopic: ${e.message}")
+                        Log.d("viewModel.ChatViewModel", "Error al obtener más información sobre $lastResponseTopic: ${e.message}")
                         addBotMessage("Error al obtener más información sobre $lastResponseTopic")
                     }
                 }
@@ -75,7 +77,7 @@ class ChatViewModel(private val openAIService: OpenAIService) : ViewModel() {
                         addBotMessage(result)
                         lastResponseTopic = prompt  // Guardar el tema tratado
                     } catch (e: Exception) {
-                        Log.d("ChatViewModel", "Error al obtener la respuesta de ChatGPT: ${e.message}")
+                        Log.d("viewModel.ChatViewModel", "Error al obtener la respuesta de ChatGPT: ${e.message}")
                         addBotMessage("Error al obtener la respuesta de ChatGPT")
                     }
                 }

@@ -14,6 +14,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.Checkbox
@@ -35,6 +36,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.input.TextFieldValue
+import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.unit.dp
 import components.CustomButton
 import kotlinx.coroutines.launch
@@ -58,11 +60,11 @@ fun LoginScreen(
     ) {
         Column(
             modifier = Modifier
-                .padding(horizontal = 16.dp, vertical = 16.dp),
+                .padding(16.dp),
             verticalArrangement = Arrangement.spacedBy(8.dp),
         ) {
             Logo()
-            LoginForm(navigator, tokenViewModel, usuarioViewModel)
+            LoginForm(navigator, usuarioViewModel)
             RememberAndForgotPass()
             Spacer(modifier = Modifier.height(60.dp))
         }
@@ -83,7 +85,6 @@ fun Logo() {
 @Composable
 fun LoginForm(
     navigator: Navigator,
-    tokenViewModel: TokenViewModel,
     usuarioViewModel: UsuarioViewModel
 ) {
     val usernameState = remember { mutableStateOf(TextFieldValue()) }
@@ -91,83 +92,84 @@ fun LoginForm(
     var errorMessage by remember { mutableStateOf("") }
     val scope = rememberCoroutineScope()
 
-    // Input de nombre de usuario
-    Text("Nombre de Usuario", color = Color.White)
-    TextField(
-        value = usernameState.value,
-        onValueChange = { usernameState.value = it },
-        label = { Text("Nombre de Usuario") },
-        colors = TextFieldDefaults.textFieldColors(
-            backgroundColor = Color.White,
-            focusedIndicatorColor = Color.Transparent,
-            unfocusedIndicatorColor = Color.Transparent
-        ),
-        modifier = Modifier
-            .fillMaxWidth()
-            .border(1.dp, Color.Gray, RoundedCornerShape(8.dp)),
-        shape = RoundedCornerShape(8.dp)
-    )
+    Column(modifier = Modifier.fillMaxWidth()) {
+        // Input de nombre de usuario
+        InputField(
+            label = "Nombre de Usuario",
+            value = usernameState.value,
+            onValueChange = { usernameState.value = it }
+        )
 
-    // Input de contraseña
-    Text("Contraseña", color = Color.White)
-    TextField(
-        value = passwordState.value,
-        onValueChange = { passwordState.value = it },
-        label = { Text("Contraseña", color = Color.Black) },
-        visualTransformation = PasswordVisualTransformation(),
-        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password),
-        colors = TextFieldDefaults.textFieldColors(
-            backgroundColor = Color.White,
-            focusedIndicatorColor = Color.Transparent,
-            unfocusedIndicatorColor = Color.Transparent
-        ),
-        modifier = Modifier
-            .fillMaxWidth()
-            .border(1.dp, Color.Gray, RoundedCornerShape(8.dp)),
-        shape = RoundedCornerShape(8.dp)
-    )
+        // Input de contraseña
+        InputField(
+            label = "Contraseña",
+            value = passwordState.value,
+            onValueChange = { passwordState.value = it },
+            isPassword = true
+        )
 
-    // Botón para iniciar sesión
-    CustomButton(
-        text = "Iniciar Sesión",
-        onClick = {
-            scope.launch {
-                if (usernameState.value.text.isNotEmpty() && passwordState.value.text.isNotEmpty()) {
-                    val authUsuario = AuthUsuario(
-                        email = usernameState.value.text,
-                        pass = passwordState.value.text
-                    )
-
-                    Log.d(
-                        "Login",
-                        "Enviando solicitud de autenticación para el usuario: ${usernameState.value.text}"
-                    )
-                    usuarioViewModel.loginUser(authUsuario, {
-                        // Acción cuando el login es exitoso (onSuccess)
-                        Log.d("Login", "Inicio de sesión exitoso")
-                        usuarioViewModel.usuario?.let { usuario ->
-                                Log.d("Login", "Nombre: ${usuario.email}, Contraseña: ${usuario.pass}")
-                            navigator.navigate(("/home"))
-                        }
-                    }, { error ->
-                        Log.d("Login", error)
-                        errorMessage = error
-                    })
-                } else {
-                    errorMessage = "Debe completar todos los campos"
+        // Botón para iniciar sesión
+        CustomButton(
+            text = "Iniciar Sesión",
+            onClick = {
+                scope.launch {
+                    if (usernameState.value.text.isNotEmpty() && passwordState.value.text.isNotEmpty()) {
+                        val authUsuario = AuthUsuario(
+                            email = usernameState.value.text,
+                            pass = passwordState.value.text
+                        )
+                        usuarioViewModel.loginUser(authUsuario, {
+                            usuarioViewModel.usuario?.let { usuario ->
+                                navigator.navigate("/home")
+                            }
+                        }, { error ->
+                            Log.d("Login", error)
+                            errorMessage = error
+                        })
+                    } else {
+                        errorMessage = "Debe completar todos los campos"
+                    }
                 }
-            }
-        },
-        modifier = Modifier
-            .padding(top = 16.dp)
-            .fillMaxWidth()
-            .height(50.dp)
-    )
+            },
+            modifier = Modifier
+                .padding(top = 16.dp)
+                .fillMaxWidth()
+                .height(50.dp)
+        )
 
-    // Mostrar mensaje de error si hay uno
-    if (errorMessage.isNotEmpty()) {
-        Text(text = errorMessage, color = Color.Red, modifier = Modifier.padding(top = 16.dp))
+        // Mostrar mensaje de error si hay uno
+        if (errorMessage.isNotEmpty()) {
+            Text(text = errorMessage, color = Color.Red, modifier = Modifier.padding(top = 16.dp))
+        }
     }
+}
+
+@Composable
+fun InputField(
+    label: String,
+    value: TextFieldValue,
+    onValueChange: (TextFieldValue) -> Unit,
+    isPassword: Boolean = false
+) {
+    Text(text = label, color = Color.White)
+    TextField(
+        value = value,
+        onValueChange = onValueChange,
+        label = { Text(label) },
+        colors = TextFieldDefaults.textFieldColors(
+            backgroundColor = Color.White,
+            focusedIndicatorColor = Color.Transparent,
+            unfocusedIndicatorColor = Color.Transparent,
+            focusedLabelColor = Color(0xFF38C93E),
+            unfocusedLabelColor = Color(0xFF757575)
+        ),
+        visualTransformation = if (isPassword) PasswordVisualTransformation() else VisualTransformation.None,
+        keyboardOptions = if (isPassword) KeyboardOptions(keyboardType = KeyboardType.Password) else KeyboardOptions.Default,
+        modifier = Modifier
+            .fillMaxWidth()
+            .border(1.dp, Color.Gray, RoundedCornerShape(8.dp)),
+        shape = RoundedCornerShape(8.dp)
+    )
 }
 
 @Composable
@@ -187,6 +189,7 @@ fun RememberAndForgotPass() {
             )
         )
         Text("Recordar contraseña", color = Color.White)
+        Spacer(modifier = Modifier.width(16.dp))
         Text("¿Olvidaste tu contraseña?", color = Color.Green, fontWeight = FontWeight.ExtraBold)
     }
 }

@@ -214,13 +214,14 @@ fun RangoAlertDialog(
                         Log.e("RangoAlertDialog", "Error al actualizar el estanque: $error")
                     }
                 )
-            }) {
-                Text("Guardar")
+            }, colors = ButtonDefaults.buttonColors(backgroundColor = Color(0xFF38D13F)) ) {
+                Text(color = Color.White ,text = "Guardar")
             }
         },
         dismissButton = {
-            Button(onClick = onDismiss) {
-                Text("Cancelar")
+            Button(onClick = onDismiss, colors = ButtonDefaults.buttonColors(backgroundColor = Color.Red))
+            {
+                Text(color = Color.White ,text = "Cancelar")
             }
         }
     )
@@ -231,7 +232,14 @@ fun SensorRangeInput(label: String, rangeValue: String, onValueChange: (String) 
     OutlinedTextField(
         value = rangeValue,
         onValueChange = onValueChange,
-        label = { Text(label) }
+        label = { Text(label) },
+        colors = TextFieldDefaults.outlinedTextFieldColors(
+            focusedBorderColor = Color(0xFF38C93E),
+            unfocusedBorderColor = Color(0xFFB0BEC5),
+            cursorColor = Color(0xFF38C93E),
+            focusedLabelColor = Color(0xFF38C93E),
+            unfocusedLabelColor = Color(0xFF757575)
+        )
     )
 }
 

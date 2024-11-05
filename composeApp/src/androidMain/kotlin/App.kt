@@ -1,4 +1,3 @@
-import android.util.Log
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
@@ -19,7 +18,6 @@ import androidx.compose.material.icons.filled.Notifications
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material3.DrawerValue
 import androidx.compose.material3.IconButton
-import androidx.compose.material3.ModalDrawerSheet
 import androidx.compose.material3.ModalNavigationDrawer
 import androidx.compose.material3.rememberDrawerState
 import androidx.compose.runtime.Composable
@@ -36,9 +34,6 @@ import androidx.compose.ui.unit.dp
 import components.DrawerContent
 import components.SetSystemBarsColor
 import data.PlantDataManager
-import service.HttpClientProvider
-import service.MqttService
-import service.OpenAIService
 import kotlinx.coroutines.launch
 import moe.tlaster.precompose.PreComposeApp
 import moe.tlaster.precompose.navigation.NavHost
@@ -52,9 +47,14 @@ import screen.PlantDetailScreen
 import screen.PlantListScreen
 import screen.PondScreen
 import screen.SensorScreen
+import service.HttpClientProvider
+import service.MqttService
+import service.OpenAIService
 import techminds.greenguardian.R
+import viewModel.ChatViewModel
 import viewModel.EstanqueViewModel
 import viewModel.MqttViewModel
+import viewModel.TareaViewModel
 import viewModel.TokenViewModel
 import viewModel.UsuarioViewModel
 
@@ -74,7 +74,9 @@ fun App() {
         val tokenViewModel = viewModel { TokenViewModel() }
         val mqttViewModel = viewModel { MqttViewModel(mqttService) } // Pasamos el mqttService
         val estanqueViewModel = viewModel { EstanqueViewModel(tokenViewModel) }
-        val userViewModel = viewModel(keys = listOf(tokenViewModel)) { UsuarioViewModel(tokenViewModel) }
+        val userViewModel =
+            viewModel(keys = listOf(tokenViewModel)) { UsuarioViewModel(tokenViewModel) }
+        val tareaViewModel = viewModel { TareaViewModel(tokenViewModel) } // ViewModel de tareas
         var currentRoute by remember { mutableStateOf("/login") }
         val drawerState = rememberDrawerState(DrawerValue.Closed)
         val scope = rememberCoroutineScope()
@@ -191,6 +193,17 @@ fun App() {
                             currentRoute = "/home"
                             HomeScreen(navigator, userViewModel)
                         }
+                        scene(route = "/tareas") {
+                            currentRoute = "/tareas"
+                            // Pasamos el ID del usuario actual a la pantalla de tareas
+                            val userId = userViewModel.usuario?.idUsuario
+                            if (userId != null) {
+                                TareasPendientesScreen(
+                                    tareaViewModel = tareaViewModel,
+                                    userId = userId // Pasar el ID del usuario actual
+                                )
+                            }
+                        }
                         scene(route = "/plantList") {
                             currentRoute = "/plantList"
                             PlantListScreen(navigator = navigator)
@@ -203,14 +216,17 @@ fun App() {
                                 PlantDetailScreen(plant = it, onBack = { navigator.popBackStack() })
                             }
                         }
-                       scene(route = "/ponds") {
+                        scene(route = "/ponds") {
                             currentRoute = "/ponds"
                             PondScreen(navigator, userViewModel, estanqueViewModel)
                         }
                         scene(route = "/sensorScreen/{estanqueId}") { backStackEntry ->
                             val estanqueId = backStackEntry.path<Long>("estanqueId")
                             estanqueId?.let {
-                                SensorScreen(estanqueViewModel,mqttViewModel)  // Mostrar la pantalla de sensores
+                                SensorScreen(
+                                    estanqueViewModel,
+                                    mqttViewModel
+                                )  // Mostrar la pantalla de sensores
                             }
                         }
                         scene(route = "/camara") {

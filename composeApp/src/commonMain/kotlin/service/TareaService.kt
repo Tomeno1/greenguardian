@@ -1,0 +1,145 @@
+package service
+
+import android.util.Log
+import io.ktor.client.HttpClient
+import io.ktor.client.request.accept
+import io.ktor.client.request.delete
+import io.ktor.client.request.get
+import io.ktor.client.request.headers
+import io.ktor.client.request.post
+import io.ktor.client.request.put
+import io.ktor.client.request.setBody
+import io.ktor.client.statement.HttpResponse
+import io.ktor.client.statement.bodyAsText
+import io.ktor.http.ContentType
+import io.ktor.http.HttpHeaders
+import io.ktor.http.contentType
+import io.ktor.http.isSuccess
+import kotlinx.serialization.json.Json
+import model.Tarea
+
+class TareaService(private val client: HttpClient) {
+    private val baseUrl = "http://192.168.1.98:8080/api/tareas"
+
+    // Obtener todas las tareas
+    suspend fun getAllTareas(token: String): List<Tarea>? {
+        return try {
+            val response: HttpResponse = client.get(baseUrl) {
+                headers {
+                    append(HttpHeaders.Authorization, "Bearer $token")
+                    accept(ContentType.Application.Json)
+                }
+            }
+            if (response.status.isSuccess()) {
+                val responseBodyText = response.bodyAsText()
+                Json.decodeFromString<List<Tarea>>(responseBodyText)
+            } else {
+                null
+            }
+        } catch (e: Exception) {
+            Log.e("TareaService", "Error al obtener todas las tareas: ${e.message}")
+            null
+        }
+    }
+
+    // Obtener una tarea por ID
+    suspend fun getTareaById(token: String, tareaId: Long): Tarea? {
+        return try {
+            val response: HttpResponse = client.get("$baseUrl/$tareaId") {
+                headers {
+                    append(HttpHeaders.Authorization, "Bearer $token")
+                    accept(ContentType.Application.Json)
+                }
+            }
+            if (response.status.isSuccess()) {
+                val responseBodyText = response.bodyAsText()
+                Json.decodeFromString<Tarea>(responseBodyText)
+            } else {
+                null
+            }
+        } catch (e: Exception) {
+            Log.e("TareaService", "Error al obtener tarea por ID: ${e.message}")
+            null
+        }
+    }
+
+    // Crear una nueva tarea
+    suspend fun createTarea(token: String, tarea: Tarea): Tarea? {
+        return try {
+            val response: HttpResponse = client.post(baseUrl) {
+                headers {
+                    append(HttpHeaders.Authorization, "Bearer $token")
+                    contentType(ContentType.Application.Json)
+                }
+                setBody(tarea)
+            }
+            if (response.status.isSuccess()) {
+                val responseBodyText = response.bodyAsText()
+                Json.decodeFromString<Tarea>(responseBodyText)
+            } else {
+                null
+            }
+        } catch (e: Exception) {
+            Log.e("TareaService", "Error al crear tarea: ${e.message}")
+            null
+        }
+    }
+
+    // Actualizar una tarea por ID
+    suspend fun updateTarea(token: String, tareaId: Long, tarea: Tarea): Tarea? {
+        return try {
+            val response: HttpResponse = client.put("$baseUrl/$tareaId") {
+                headers {
+                    append(HttpHeaders.Authorization, "Bearer $token")
+                    contentType(ContentType.Application.Json)
+                }
+                setBody(tarea)
+            }
+            if (response.status.isSuccess()) {
+                val responseBodyText = response.bodyAsText()
+                Json.decodeFromString<Tarea>(responseBodyText)
+            } else {
+                null
+            }
+        } catch (e: Exception) {
+            Log.e("TareaService", "Error al actualizar tarea: ${e.message}")
+            null
+        }
+    }
+
+    // Eliminar una tarea por ID
+    suspend fun deleteTarea(token: String, tareaId: Long): Boolean {
+        return try {
+            val response: HttpResponse = client.delete("$baseUrl/$tareaId") {
+                headers {
+                    append(HttpHeaders.Authorization, "Bearer $token")
+                }
+            }
+            response.status.isSuccess()
+        } catch (e: Exception) {
+            Log.e("TareaService", "Error al eliminar tarea: ${e.message}")
+            false
+        }
+    }
+
+    // Obtener tareas por ID de usuario
+    suspend fun getTareasByIdUsuario(token: String, userId: Long): List<Tarea>? {
+        return try {
+            val response: HttpResponse = client.get("$baseUrl/search-tarea/$userId") {
+                headers {
+                    append(HttpHeaders.Authorization, "Bearer $token")
+                    accept(ContentType.Application.Json)
+                }
+            }
+            if (response.status.isSuccess()) {
+                val responseBodyText = response.bodyAsText()
+                Json.decodeFromString<List<Tarea>>(responseBodyText)
+            } else {
+                null
+            }
+        } catch (e: Exception) {
+            Log.e("TareaService", "Error al obtener tareas por ID de usuario: ${e.message}")
+            null
+        }
+    }
+}
