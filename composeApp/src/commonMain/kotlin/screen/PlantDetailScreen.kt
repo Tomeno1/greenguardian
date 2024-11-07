@@ -46,7 +46,7 @@ fun PlantDetailScreen(plant: Plant, onBack: () -> Unit) {
             .fillMaxSize()
             .padding(16.dp)
     ) {
-        // Imagen de la planta
+        // Imagen de la planta, ocupando el ancho completo y con altura específica
         Image(
             painter = rememberAsyncImagePainter(plant.imageUrl),
             contentDescription = plant.name,
@@ -59,7 +59,7 @@ fun PlantDetailScreen(plant: Plant, onBack: () -> Unit) {
 
         Spacer(modifier = Modifier.height(16.dp))
 
-        // Card con fondo blanco que encapsula la información de la planta
+        // Card que encapsula la información detallada de la planta
         Card(
             modifier = Modifier.fillMaxWidth(),
             shape = RoundedCornerShape(12.dp),
@@ -67,7 +67,7 @@ fun PlantDetailScreen(plant: Plant, onBack: () -> Unit) {
             elevation = 4.dp
         ) {
             Column(modifier = Modifier.padding(16.dp)) {
-                // Encabezado: Nombre y etiqueta de tipo de cultivo
+                // Encabezado con nombre de la planta y etiqueta de cultivo
                 Row(
                     verticalAlignment = Alignment.CenterVertically,
                     horizontalArrangement = Arrangement.SpaceBetween,
@@ -101,16 +101,17 @@ fun PlantDetailScreen(plant: Plant, onBack: () -> Unit) {
 
                 Spacer(modifier = Modifier.height(16.dp))
 
+                // Recomendaciones de cultivo hidropónico
                 Row(
                     verticalAlignment = Alignment.CenterVertically
                 ) {
                     Icon(
-                        imageVector = Icons.Outlined.Eco, // Puedes usar otro icono si lo prefieres
+                        imageVector = Icons.Outlined.Eco,
                         contentDescription = "Icono de recomendaciones",
                         tint = Color.Green,
                         modifier = Modifier.size(30.dp)
                     )
-                    Spacer(modifier = Modifier.width(4.dp)) // Espacio entre el icono y el texto
+                    Spacer(modifier = Modifier.width(4.dp))
                     Text(
                         text = "Recomendaciones para cultivo hidropónico",
                         fontWeight = FontWeight.Bold,
@@ -118,6 +119,7 @@ fun PlantDetailScreen(plant: Plant, onBack: () -> Unit) {
                     )
                 }
 
+                // Texto con las recomendaciones específicas o mensaje predeterminado
                 Text(
                     text = plant.recommendations ?: "No disponible",
                     style = MaterialTheme.typography.body1,
@@ -127,23 +129,21 @@ fun PlantDetailScreen(plant: Plant, onBack: () -> Unit) {
 
                 Spacer(modifier = Modifier.height(16.dp))
 
-                // Sección de Niveles de pH y Temperatura óptima
+                // Niveles óptimos de pH y temperatura en una fila con columnas
                 Row(
                     verticalAlignment = Alignment.CenterVertically,
                     modifier = Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.SpaceBetween
                 ) {
                     Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                        Row(
-                            verticalAlignment = Alignment.CenterVertically
-                        ) {
+                        Row(verticalAlignment = Alignment.CenterVertically) {
                             Icon(
                                 imageVector = Icons.Outlined.WaterDrop,
                                 contentDescription = "Icono de nivel de pH",
                                 tint = Color.Blue,
-                                modifier = Modifier.size(30.dp) // Tamaño del icono
+                                modifier = Modifier.size(30.dp)
                             )
-                            Spacer(modifier = Modifier.width(4.dp)) // Espacio entre el icono y el texto
+                            Spacer(modifier = Modifier.width(4.dp))
                             Text(
                                 text = "Nivel de pH",
                                 style = MaterialTheme.typography.body1,
@@ -159,16 +159,14 @@ fun PlantDetailScreen(plant: Plant, onBack: () -> Unit) {
                     }
 
                     Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                        Row(
-                            verticalAlignment = Alignment.CenterVertically
-                        ) {
+                        Row(verticalAlignment = Alignment.CenterVertically) {
                             Icon(
                                 imageVector = Icons.Outlined.Thermostat,
                                 contentDescription = "Icono de temperatura óptima",
                                 tint = Color.Red,
-                                modifier = Modifier.size(30.dp) // Tamaño del icono
+                                modifier = Modifier.size(30.dp)
                             )
-                            Spacer(modifier = Modifier.width(4.dp)) // Espacio entre el icono y el texto
+                            Spacer(modifier = Modifier.width(4.dp))
                             Text(
                                 text = "Temperatura óptima",
                                 style = MaterialTheme.typography.body1,
@@ -188,7 +186,7 @@ fun PlantDetailScreen(plant: Plant, onBack: () -> Unit) {
 
         Spacer(modifier = Modifier.height(16.dp))
 
-        // Botón de regreso
+        // Botón para volver, alineado a la derecha
         Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.End) {
             Button(
                 onClick = onBack,
@@ -200,10 +198,10 @@ fun PlantDetailScreen(plant: Plant, onBack: () -> Unit) {
     }
 }
 
-
 @Preview
 @Composable
 fun PlantDetailScreenPreview() {
+    // Vista previa con datos de ejemplo de una planta
     PlantDetailScreen(
         plant = Plant(
             name = "Lechuga",

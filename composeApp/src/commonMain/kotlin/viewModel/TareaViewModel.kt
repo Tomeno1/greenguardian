@@ -12,26 +12,26 @@ import moe.tlaster.precompose.viewmodel.viewModelScope
 
 class TareaViewModel(private val tokenViewModel: TokenViewModel) : ViewModel() {
 
-    private val tareaService = TareaService(HttpClientProvider.client)
+    private val tareaService = TareaService(HttpClientProvider.client) // Servicio para interactuar con el backend de tareas
 
-    // Lista de tareas observables
-     var tareas = mutableStateListOf<Tarea>()
+    // Lista de tareas observable en la UI
+    var tareas = mutableStateListOf<Tarea>()
         private set
 
-    // Estado de la tarea seleccionada
-     var selectedTarea = mutableStateOf<Tarea?>(null)
+    // Estado de la tarea seleccionada (para ver o editar una tarea específica)
+    var selectedTarea = mutableStateOf<Tarea?>(null)
         private set
 
-    // Estado de mensaje de error
-     var errorMessage = mutableStateOf<String?>(null)
+    // Estado de mensajes de error (en caso de errores al cargar o modificar tareas)
+    var errorMessage = mutableStateOf<String?>(null)
         private set
 
-    // Cargar todas las tareas
+    // Función para cargar todas las tareas desde el backend
     fun loadTareas() {
         viewModelScope.launch {
             try {
-                val token = tokenViewModel.token
-                val result = token?.let { tareaService.getAllTareas(it) }
+                val token = tokenViewModel.token  // Token de autenticación del usuario
+                val result = token?.let { tareaService.getAllTareas(it) }  // Llamada al servicio para obtener tareas
                 if (result != null) {
                     tareas.clear()
                     tareas.addAll(result)
@@ -45,7 +45,7 @@ class TareaViewModel(private val tokenViewModel: TokenViewModel) : ViewModel() {
         }
     }
 
-    // Cargar una tarea por ID
+    // Función para cargar una tarea específica por su ID
     fun loadTareaById(idTarea: Long) {
         viewModelScope.launch {
             try {
@@ -63,7 +63,7 @@ class TareaViewModel(private val tokenViewModel: TokenViewModel) : ViewModel() {
         }
     }
 
-    // Crear una nueva tarea
+    // Función para crear una nueva tarea y agregarla a la lista
     fun createTarea(tarea: Tarea, onSuccess: () -> Unit, onError: (String) -> Unit) {
         viewModelScope.launch {
             try {
@@ -82,17 +82,19 @@ class TareaViewModel(private val tokenViewModel: TokenViewModel) : ViewModel() {
         }
     }
 
-    // Actualizar una tarea por ID
+    // Función para actualizar una tarea existente
     fun updateTarea(idTarea: Long, tarea: Tarea, onSuccess: () -> Unit, onError: (String) -> Unit) {
         viewModelScope.launch {
             try {
                 val token = tokenViewModel.token
                 val result = token?.let { tareaService.updateTarea(it, idTarea, tarea) }
                 if (result != null) {
+                    // Actualizar la tarea en la lista de tareas
                     val index = tareas.indexOfFirst { it.id == idTarea }
                     if (index >= 0) {
                         tareas[index] = result
                     }
+                    // Si la tarea actualizada es la seleccionada, actualizar `selectedTarea`
                     selectedTarea.value = if (selectedTarea.value?.id == idTarea) result else selectedTarea.value
                     onSuccess()
                 } else {
@@ -105,7 +107,7 @@ class TareaViewModel(private val tokenViewModel: TokenViewModel) : ViewModel() {
         }
     }
 
-    // Eliminar una tarea por ID
+    // Función para eliminar una tarea por su ID
     fun deleteTarea(idTarea: Long, onSuccess: () -> Unit, onError: (String) -> Unit) {
         viewModelScope.launch {
             try {
@@ -124,7 +126,7 @@ class TareaViewModel(private val tokenViewModel: TokenViewModel) : ViewModel() {
         }
     }
 
-    // Cargar tareas por ID de usuario
+    // Función para cargar tareas específicas de un usuario por su ID
     fun loadTareasByIdUsuario(idUsuario: Long) {
         viewModelScope.launch {
             try {

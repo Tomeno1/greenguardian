@@ -66,18 +66,15 @@ fun DrawerContent(
     onLogout: () -> Unit,
     usuarioViewModel: UsuarioViewModel
 ) {
-    val launcher = rememberLauncherForActivityResult(
-        contract = ActivityResultContracts.GetContent()
-    ) { uri: Uri? ->
-        uri?.let {
-            usuarioViewModel.updateUserImageUri(it) // Actualiza el estado de la imagen en el ViewModel
-        }
+    // --- Selector de imagen de usuario ---
+    val launcher = rememberLauncherForActivityResult(ActivityResultContracts.GetContent()) { uri: Uri? ->
+        uri?.let { usuarioViewModel.updateUserImageUri(it) } // Actualiza la imagen del usuario en el ViewModel
     }
 
-    val userImagePainter: Painter? = usuarioViewModel.userImageUri?.let {
-        rememberAsyncImagePainter(it)
-    }
+    // --- Imagen de usuario ---
+    val userImagePainter = usuarioViewModel.userImageUri?.let { rememberAsyncImagePainter(it) }
 
+    // --- Definición de las secciones del drawer ---
     val drawerSections = mapOf(
         "General" to listOf(
             ItemNavigation("/home", "Home", Icons.Default.Home, Icons.Outlined.Home),
@@ -86,56 +83,32 @@ fun DrawerContent(
             ItemNavigation("/tareas", "Tareas", Icons.Default.Task, Icons.Outlined.Task)
         ),
         "Asistencia" to listOf(
-            ItemNavigation(
-                "/asistente", "Asistente", Icons.AutoMirrored.Filled.Chat,
-                Icons.AutoMirrored.Outlined.Chat
-            ),
-            ItemNavigation(
-                "/ayuda", "Ayuda", Icons.AutoMirrored.Filled.Help,
-                Icons.AutoMirrored.Outlined.Help
-            )
+            ItemNavigation("/asistente", "Asistente", Icons.AutoMirrored.Filled.Chat, Icons.AutoMirrored.Outlined.Chat),
+            ItemNavigation("/ayuda", "Ayuda", Icons.AutoMirrored.Filled.Help, Icons.AutoMirrored.Outlined.Help)
         ),
         "Configuración" to listOf(
-            ItemNavigation(
-                "/configuracion",
-                "Configuración",
-                Icons.Default.Settings,
-                Icons.Outlined.Settings
-            ),
-            ItemNavigation(
-                "/logout",
-                "Cerrar Sesion",
-                Icons.AutoMirrored.Filled.Logout,
-                Icons.AutoMirrored.Outlined.Logout
-            )
+            ItemNavigation("/configuracion", "Configuración", Icons.Default.Settings, Icons.Outlined.Settings),
+            ItemNavigation("/logout", "Cerrar Sesion", Icons.AutoMirrored.Filled.Logout, Icons.AutoMirrored.Outlined.Logout)
         )
     )
 
-    ModalDrawerSheet(
-        drawerContainerColor = Color(0xFF00001B)
-    ) {
+    // --- Contenido del drawer ---
+    ModalDrawerSheet(drawerContainerColor = Color(0xFF00001B)) {
 
+        // --- Encabezado del drawer (imagen y datos del usuario) ---
         Row(
-            modifier = Modifier
-                .padding(16.dp)
-                .fillMaxWidth(),
+            modifier = Modifier.padding(16.dp).fillMaxWidth(),
             verticalAlignment = Alignment.CenterVertically
         ) {
             Box(
-                modifier = Modifier
-                    .size(80.dp)
-                    .clickable {
-                        launcher.launch("image/*") // Abre el selector de imágenes
-                    }
+                modifier = Modifier.size(80.dp).clickable { launcher.launch("image/*") }
             ) {
+                // Muestra la imagen del usuario o un ícono predeterminado
                 if (userImagePainter != null) {
                     Image(
                         painter = userImagePainter,
                         contentDescription = "User Image",
-                        modifier = Modifier
-                            .fillMaxSize()
-                            .clip(CircleShape)
-                            .border(width = 1.dp, color = Color.White, shape = CircleShape),
+                        modifier = Modifier.fillMaxSize().clip(CircleShape).border(1.dp, Color.White, CircleShape),
                         contentScale = ContentScale.Crop
                     )
                 } else {
@@ -143,21 +116,14 @@ fun DrawerContent(
                         imageVector = Icons.Default.Person,
                         contentDescription = "User Icon",
                         tint = Color.White,
-                        modifier = Modifier
-                            .fillMaxSize()
-                            .clip(CircleShape)
-                            .border(width = 1.dp, color = Color.White, shape = CircleShape)
+                        modifier = Modifier.fillMaxSize().clip(CircleShape).border(1.dp, Color.White, CircleShape)
                     )
                 }
-                // Ícono de la cámara superpuesto dentro del círculo
+
+                // Ícono de cámara para cambiar la imagen
                 Box(
-                    modifier = Modifier
-                        .align(Alignment.BottomEnd)
-                        .offset(x = (-1).dp, y = (-1).dp)
-                        .size(24.dp)
-                        .clip(CircleShape)
-                        .background(Color.White)
-                        .padding(2.dp)
+                    modifier = Modifier.align(Alignment.BottomEnd).offset((-1).dp, (-1).dp)
+                        .size(24.dp).clip(CircleShape).background(Color.White).padding(2.dp)
                 ) {
                     Icon(
                         imageVector = Icons.Default.CameraAlt,
@@ -167,7 +133,10 @@ fun DrawerContent(
                     )
                 }
             }
+
             Spacer(modifier = Modifier.width(16.dp))
+
+            // Información del usuario: nombre y correo
             Column {
                 Text(
                     text = usuarioViewModel.usuario?.nombre ?: "Nombre del Usuario",
@@ -181,12 +150,10 @@ fun DrawerContent(
                 )
             }
         }
-        HorizontalDivider(
-            color = Color.White,
-            thickness = 1.dp,
-            modifier = Modifier.padding(vertical = 8.dp)
-        )
 
+        HorizontalDivider(color = Color.White, thickness = 1.dp, modifier = Modifier.padding(vertical = 8.dp))
+
+        // --- Secciones del drawer ---
         drawerSections.forEach { (sectionTitle, items) ->
             // Título de la sección
             Text(
@@ -196,7 +163,7 @@ fun DrawerContent(
                 modifier = Modifier.padding(start = 16.dp, top = 16.dp, bottom = 8.dp)
             )
 
-            // Elementos de la sección
+            // Elementos de navegación dentro de cada sección
             items.forEach { item ->
                 val isSelected = selectedItem == item.route
                 NavigationDrawerItem(
@@ -204,13 +171,13 @@ fun DrawerContent(
                         Icon(
                             imageVector = if (isSelected) item.outlinedIcon else item.defaultIcon,
                             contentDescription = null,
-                            tint = if (isSelected) Color.White else Color.White
+                            tint = Color.White
                         )
                     },
                     label = {
                         Text(
                             text = item.label,
-                            color = if (isSelected) Color.White else Color.White
+                            color = Color.White
                         )
                     },
                     selected = isSelected,
@@ -235,11 +202,7 @@ fun DrawerContent(
             }
 
             // Divider entre secciones
-            HorizontalDivider(
-                color = Color.White,
-                thickness = 1.dp,
-                modifier = Modifier.padding(vertical = 8.dp)
-            )
+            HorizontalDivider(color = Color.White, thickness = 1.dp, modifier = Modifier.padding(vertical = 8.dp))
         }
     }
 }
@@ -251,5 +214,6 @@ fun DrawerContentPreview() {
         selectedItem = "/home",
         onItemSelected = {},
         usuarioViewModel = UsuarioViewModel(tokenViewModel = TokenViewModel()),
-        onLogout = {})
+        onLogout = {}
+    )
 }

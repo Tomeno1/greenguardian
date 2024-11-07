@@ -70,7 +70,7 @@ fun HomeScreen(
     navigator: Navigator,
     usuarioViewModel: UsuarioViewModel,
 ) {
-    // Obtenemos el nombre del usuario del ViewModel de forma reactiva
+    // Obtenemos el nombre y apellido del usuario del ViewModel de forma reactiva
     val userName by remember { mutableStateOf(usuarioViewModel.usuario?.nombre ?: "Invitado") }
     val lastName by remember { mutableStateOf(usuarioViewModel.usuario?.apellido ?: "Invitado") }
 
@@ -80,30 +80,31 @@ fun HomeScreen(
             .background(Color.Transparent)
             .padding(16.dp)
     ) {
+        // Tarjeta de bienvenida al usuario
+        GreetingCard(userName = userName, lastName = lastName, usuarioViewModel = usuarioViewModel)
 
-        GreetingCard(userName = userName, lastName = lastName ,usuarioViewModel = usuarioViewModel)
+        // Lista vertical que contiene secciones como solución nutritiva, lista de plantas y guía hidroponica
         LazyColumn(
             modifier = Modifier
                 .fillMaxSize()
                 .background(Color.Transparent)
         ) {
             item {
-                SolucionNutritiva(usuarioViewModel)
+                SolucionNutritiva(usuarioViewModel)  // Muestra los datos de la solución nutritiva
             }
             item {
-                PlantList(plants = PlantDataManager.plants, navigator = navigator)
+                PlantList(plants = PlantDataManager.plants, navigator = navigator)  // Muestra una lista de plantas
             }
             item {
-                HydroponicGuide() // Sin LazyColumn interno
+                HydroponicGuide()  // Muestra una guía para hidroponía
             }
         }
-
     }
 }
 
 @Composable
 fun SolucionNutritiva(usuarioViewModel: UsuarioViewModel) {
-    // Llamada para cargar los datos de promedio de los estanques al iniciar la pantalla
+    // Carga de los datos de promedio de estanques al iniciar la pantalla
     LaunchedEffect(Unit) {
         usuarioViewModel.usuario?.let { usuario ->
             usuarioViewModel.loadPromedioEstanques(usuario.idUsuario) { errorMessage ->
@@ -112,7 +113,7 @@ fun SolucionNutritiva(usuarioViewModel: UsuarioViewModel) {
         }
     }
 
-    // Obtenemos el promedio de los estanques desde el ViewModel
+    // Obtiene el promedio de los estanques del ViewModel
     val promedioEstanques = usuarioViewModel.promedioEstanques
 
     // Si los datos están cargados correctamente, mostrar la información
@@ -137,7 +138,7 @@ fun SolucionNutritiva(usuarioViewModel: UsuarioViewModel) {
                 .fillMaxWidth()
                 .height(300.dp)
         ) {
-            // Columna 1: Indicador semicircular (izquierda)
+            // Indicador semicircular para la temperatura del estanque
             Card(
                 modifier = Modifier.padding(end = 8.dp),
                 shape = RoundedCornerShape(16.dp),
@@ -151,7 +152,6 @@ fun SolucionNutritiva(usuarioViewModel: UsuarioViewModel) {
                         .background(Color.Transparent)
                         .padding(8.dp)
                 ) {
-                    // Indicador semicircular con el valor de temperatura
                     SemicircularProgressIndicator(
                         progress = promedioEstanques.temperature / 50f, // Asumiendo un rango de 0-50°C
                         value = String.format(Locale.US, "%.2f°C", promedioEstanques.temperature),
@@ -160,12 +160,12 @@ fun SolucionNutritiva(usuarioViewModel: UsuarioViewModel) {
                 }
             }
 
-            // Columna 2: PH y Conductividad (derecha)
+            // PH y Conductividad en la columna derecha
             Column(
                 modifier = Modifier.fillMaxHeight(),
                 verticalArrangement = Arrangement.SpaceBetween
             ) {
-                // Componente PH
+                // Muestra el nivel de PH
                 Row(
                     modifier = Modifier
                         .fillMaxWidth()
@@ -196,6 +196,7 @@ fun SolucionNutritiva(usuarioViewModel: UsuarioViewModel) {
                                 fontWeight = FontWeight.Bold,
                                 color = Color.Black
                             )
+                            // Línea que representa el nivel de PH
                             Canvas(
                                 modifier = Modifier
                                     .fillMaxWidth()
@@ -215,7 +216,7 @@ fun SolucionNutritiva(usuarioViewModel: UsuarioViewModel) {
                     }
                 }
 
-                // Componente Conductividad
+                // Muestra el nivel de Conductividad
                 Row(
                     modifier = Modifier
                         .fillMaxWidth()
@@ -243,6 +244,7 @@ fun SolucionNutritiva(usuarioViewModel: UsuarioViewModel) {
                                 fontWeight = FontWeight.Bold,
                                 color = Color.Black
                             )
+                            // Línea que representa el nivel de Conductividad
                             Canvas(
                                 modifier = Modifier
                                     .fillMaxWidth()
@@ -289,6 +291,7 @@ fun SemicircularProgressIndicator(
     value: String,
     label: String
 ) {
+    // Indicador semicircular para mostrar un valor con progreso visual
     Box(
         contentAlignment = Alignment.Center,
         modifier = Modifier
@@ -297,7 +300,7 @@ fun SemicircularProgressIndicator(
             .padding(10.dp)
     ) {
         Canvas(modifier = Modifier.size(150.dp)) {  // Ajusta el tamaño del Canvas según tus necesidades
-            // Fondo del arco
+            // Arco de fondo
             drawArc(
                 color = Color.LightGray,
                 startAngle = 180f,
@@ -306,7 +309,7 @@ fun SemicircularProgressIndicator(
                 style = Stroke(12.dp.toPx(), cap = StrokeCap.Round)
             )
 
-            // Arco con el progreso
+            // Arco de progreso
             drawArc(
                 color = Color(0xFF2196F3),
                 startAngle = 180f,
@@ -328,7 +331,7 @@ fun SemicircularProgressIndicator(
 
 @Composable
 fun GreetingCard(userName: String,lastName: String, usuarioViewModel: UsuarioViewModel) {
-    // Observamos el estado de la URI de la imagen en el ViewModel
+    // Muestra un saludo al usuario con su imagen de perfil si está disponible
     val imageUri = usuarioViewModel.userImageUri
     Row(
         modifier = Modifier
@@ -383,6 +386,7 @@ fun GreetingCard(userName: String,lastName: String, usuarioViewModel: UsuarioVie
 
 @Composable
 fun HydroponicGuide() {
+    // Muestra los pasos de una guía de hidroponía, con diálogo emergente al seleccionar un paso
     var selectedStep by remember { mutableStateOf<GuideStepData?>(null) }
 
     Column(
@@ -405,7 +409,7 @@ fun HydroponicGuide() {
             )
         }
     }
-
+    // Diálogo para mostrar la descripción del paso seleccionado
     selectedStep?.let { step ->
         AlertDialog(
             onDismissRequest = { selectedStep = null },
@@ -458,6 +462,7 @@ fun GuideStep(
     iconTint: Color,
     onClick: () -> Unit
 ) {
+    // Paso de la guía que es clickeable y muestra un ícono
     Card(
         shape = RoundedCornerShape(8.dp),
         modifier = Modifier
@@ -488,6 +493,7 @@ fun GuideStep(
 
 @Composable
 fun PlantList(plants: List<Plant>, navigator: Navigator) {
+    // Lista horizontal de plantas con un botón "Ver más"
     Row(
         modifier = Modifier.padding(vertical = 8.dp),
         verticalAlignment = Alignment.CenterVertically
@@ -523,6 +529,7 @@ fun PlantList(plants: List<Plant>, navigator: Navigator) {
 
 @Composable
 fun PlantCard(plant: Plant, onClick: () -> Unit) {
+    // Tarjeta que representa una planta específica en la lista de plantas
     Card(
         shape = RoundedCornerShape(8.dp),
         elevation = 4.dp,

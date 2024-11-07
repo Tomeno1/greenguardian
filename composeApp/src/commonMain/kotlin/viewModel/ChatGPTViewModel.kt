@@ -14,14 +14,14 @@ class ChatViewModel(private val openAIService: OpenAIService) : ViewModel() {
         Log.d("viewModel.ChatViewModel", "viewModel.ChatViewModel creado")
     }
 
-    // Lista de mensajes para el chat
+    // Lista de mensajes para el chat que mantiene la conversación entre el usuario y el bot
     var messages = mutableStateListOf<MessageinBubble>()
         private set
 
-    // Último tema tratado
+    // Guarda el último tema de conversación relacionado con hidroponía para continuar en caso de preguntas de seguimiento
     private var lastResponseTopic: String? = null
 
-    // Lista de palabras clave relacionadas con hidroponía
+    // Función para verificar si un mensaje contiene palabras relacionadas con hidroponía
     private fun isRelatedToHydroponics(prompt: String): Boolean {
         val keywords = listOf(
             "planta", "verdura", "hidroponía", "cultivo", "agua", "nutrientes", "estanque hidroponico",
@@ -35,32 +35,32 @@ class ChatViewModel(private val openAIService: OpenAIService) : ViewModel() {
         return keywords.any { keyword -> prompt.contains(keyword, ignoreCase = true) }
     }
 
-    // Verificación específica para "gracias"
+    // Función para identificar frases corteses, como "gracias", y responder adecuadamente
     private fun isPolitePhrase(prompt: String): Boolean {
         val politeKeywords = listOf("gracias", "muchas gracias", "thank you")
         return politeKeywords.any { polite -> prompt.contains(polite, ignoreCase = true) }
     }
 
-    // Verificación para preguntas de seguimiento
+    // Función para identificar preguntas de seguimiento, usando ciertas palabras clave
     private fun isFollowUpQuestion(prompt: String): Boolean {
         val followUpKeywords = listOf("puedes decirme más", "más información", "explícame", "detalles")
         return followUpKeywords.any { followUp -> prompt.contains(followUp, ignoreCase = true) }
     }
 
-    // Función para enviar mensajes al ChatGPT
+    // Función principal para gestionar la respuesta de ChatGPT en función del mensaje del usuario
     fun getChatGPTResponse(prompt: String) {
         viewModelScope.launch {
-            // Agregar el mensaje del usuario a la lista
+            // Añade el mensaje del usuario a la lista de mensajes del chat
             messages.add(MessageinBubble(prompt, isUser = true))
 
             when {
+                // Si el mensaje es una frase de cortesía, responde de forma amigable
                 isPolitePhrase(prompt) -> {
-                    // Respuesta amigable para "gracias"
                     val botResponse = "¡De nada! Estoy aquí para ayudar en lo que necesites."
                     addBotMessage(botResponse)
                 }
+                // Si el mensaje es una pregunta de seguimiento y hay un tema previo, pide más información sobre el tema
                 isFollowUpQuestion(prompt) && lastResponseTopic != null -> {
-                    // Pregunta de seguimiento sobre un tema anterior
                     try {
                         val followUpPrompt = "Proporciona más información sobre $lastResponseTopic."
                         val result = openAIService.getResponse(followUpPrompt)
@@ -70,26 +70,26 @@ class ChatViewModel(private val openAIService: OpenAIService) : ViewModel() {
                         addBotMessage("Error al obtener más información sobre $lastResponseTopic")
                     }
                 }
+                // Si el mensaje está relacionado con hidroponía, se envía el mensaje a ChatGPT para obtener una respuesta
                 isRelatedToHydroponics(prompt) -> {
-                    // Pregunta relacionada con hidroponía
                     try {
                         val result = openAIService.getResponse(prompt)
                         addBotMessage(result)
-                        lastResponseTopic = prompt  // Guardar el tema tratado
+                        lastResponseTopic = prompt  // Actualiza el tema de la conversación
                     } catch (e: Exception) {
                         Log.d("viewModel.ChatViewModel", "Error al obtener la respuesta de ChatGPT: ${e.message}")
                         addBotMessage("Error al obtener la respuesta de ChatGPT")
                     }
                 }
+                // Si el mensaje no está relacionado con hidroponía, responde indicando que el tema no está soportado
                 else -> {
-                    // Pregunta no relacionada con hidroponía
                     addBotMessage("Lo siento, solo puedo responder preguntas relacionadas a la hidroponía.")
                 }
             }
         }
     }
 
-    // Función para agregar el mensaje del bot a la lista
+    // Función para añadir un mensaje del bot al chat
     private fun addBotMessage(message: String) {
         messages.add(MessageinBubble(message, isUser = false))
     }

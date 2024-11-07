@@ -10,56 +10,57 @@ import kotlinx.coroutines.launch
 import moe.tlaster.precompose.viewmodel.ViewModel
 import moe.tlaster.precompose.viewmodel.viewModelScope
 
+// ViewModel que maneja el token de autenticación y el estado de inicio de sesión del usuario
 class TokenViewModel : ViewModel() {
 
-    // API connection instance
+    // Instancia del servicio de autenticación, configurado con el cliente HTTP
     private val authService = AuthService(HttpClientProvider.client)
 
-    // Token value and logged-in status
+    // Token de autenticación, observable en la UI y estado de inicio de sesión
     var token: String? by mutableStateOf(null)
-        private set
+        private set  // Solo se puede modificar dentro del ViewModel
 
     var isLoggedIn: Boolean by mutableStateOf(false)
-        private set
+        private set  // El estado de inicio de sesión es de solo lectura desde fuera del ViewModel
 
-    // Initialize the ViewModel and log its creation
+    // Inicialización del ViewModel con un registro en el log
     init {
         Log.d("TokenViewModel", "TokenViewModel creado")
     }
 
-    // Function to update the token and set the logged-in status
+    // Función para actualizar el token y cambiar el estado a "logueado"
     fun updateToken(newToken: String) {
-        token = newToken
-        isLoggedIn = true
+        token = newToken       // Asigna el nuevo token
+        isLoggedIn = true      // Cambia el estado a logueado
         Log.d("TokenViewModel", "Token actualizado: $newToken")
     }
 
-    // Function to handle the logout process
+    // Función para gestionar el proceso de cierre de sesión
     fun logout(onSuccess: () -> Unit, onError: (String) -> Unit) {
         viewModelScope.launch {
             try {
-                // Clear the token and logged-in status
+                // Llama a `clearToken` para limpiar el token y el estado de sesión
                 clearToken()
 
-                // If there is a logout endpoint in your API, call it here
-                // For example:
-                // apiConnection.logout(token)
+                // Si tu API tiene un endpoint de logout, aquí se llamaría
+                // Por ejemplo:
+                // authService.logout(token)
 
-                // Successfully logged out
+                // Indica que el cierre de sesión fue exitoso
                 onSuccess()
                 Log.d("TokenViewModel", "Sesión cerrada exitosamente")
             } catch (e: Exception) {
-                // Log and handle logout error
+                // En caso de error, llama a `onError` y registra el error
                 onError("Error al cerrar sesión")
                 Log.d("TokenViewModel", "Error al cerrar sesión", e)
             }
         }
     }
 
-    // Function to clear the token and reset logged-in status
+    // Función para limpiar el token y reiniciar el estado de sesión
     fun clearToken() {
-        token = null
-        isLoggedIn = false
+        token = null            // Elimina el valor del token
+        isLoggedIn = false      // Cambia el estado de sesión a no logueado
         Log.d("TokenViewModel", "Token eliminado y sesión cerrada")
     }
 }

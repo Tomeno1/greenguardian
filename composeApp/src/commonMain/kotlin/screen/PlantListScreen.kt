@@ -20,11 +20,13 @@ import moe.tlaster.precompose.navigation.Navigator
 
 @Composable
 fun PlantListScreen(navigator: Navigator) {
+    // Pantalla que muestra una lista completa de plantas en una cuadrícula adaptable
     Column(
         modifier = Modifier
             .fillMaxSize()
             .padding(16.dp)
     ) {
+        // Título de la pantalla
         Text(
             text = "Lista Completa de Plantas",
             style = MaterialTheme.typography.h6,
@@ -32,13 +34,15 @@ fun PlantListScreen(navigator: Navigator) {
             modifier = Modifier.padding(bottom = 16.dp)
         )
 
+        // Cuadrícula adaptable para mostrar las tarjetas de plantas
         LazyVerticalGrid(
-            columns = GridCells.Adaptive(minSize = 150.dp), // Ajusta el tamaño mínimo para cada celda
+            columns = GridCells.Adaptive(minSize = 150.dp),  // Tamaño mínimo para cada celda
             modifier = Modifier.fillMaxSize()
         ) {
+            // Itera sobre la lista de plantas del PlantDataManager y crea una tarjeta por cada planta
             items(PlantDataManager.plants) { plant ->
                 PlantCard(plant = plant) {
-                    navigator.navigate("/plantDetail/${plant.name}")
+                    navigator.navigate("/plantDetail/${plant.name}")  // Navega a los detalles de la planta
                 }
             }
         }

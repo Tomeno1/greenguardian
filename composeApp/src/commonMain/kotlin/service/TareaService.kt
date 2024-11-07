@@ -18,21 +18,22 @@ import io.ktor.http.isSuccess
 import kotlinx.serialization.json.Json
 import model.Tarea
 
+// Servicio que interactúa con el backend para operaciones CRUD de Tareas
 class TareaService(private val client: HttpClient) {
-    private val baseUrl = "http://192.168.1.98:8080/api/tareas"
+    private val baseUrl = "http://192.168.1.98:8080/api/tareas" // URL base del endpoint de tareas
 
     // Obtener todas las tareas
     suspend fun getAllTareas(token: String): List<Tarea>? {
         return try {
             val response: HttpResponse = client.get(baseUrl) {
                 headers {
-                    append(HttpHeaders.Authorization, "Bearer $token")
-                    accept(ContentType.Application.Json)
+                    append(HttpHeaders.Authorization, "Bearer $token") // Autenticación con token
+                    accept(ContentType.Application.Json) // Especifica el tipo de respuesta esperado
                 }
             }
             if (response.status.isSuccess()) {
                 val responseBodyText = response.bodyAsText()
-                Json.decodeFromString<List<Tarea>>(responseBodyText)
+                Json.decodeFromString<List<Tarea>>(responseBodyText) // Decodifica la respuesta a una lista de tareas
             } else {
                 null
             }
@@ -42,7 +43,7 @@ class TareaService(private val client: HttpClient) {
         }
     }
 
-    // Obtener una tarea por ID
+    // Obtener una tarea por su ID
     suspend fun getTareaById(token: String, tareaId: Long): Tarea? {
         return try {
             val response: HttpResponse = client.get("$baseUrl/$tareaId") {
@@ -53,7 +54,7 @@ class TareaService(private val client: HttpClient) {
             }
             if (response.status.isSuccess()) {
                 val responseBodyText = response.bodyAsText()
-                Json.decodeFromString<Tarea>(responseBodyText)
+                Json.decodeFromString<Tarea>(responseBodyText) // Decodifica la respuesta a una tarea
             } else {
                 null
             }
@@ -69,13 +70,13 @@ class TareaService(private val client: HttpClient) {
             val response: HttpResponse = client.post(baseUrl) {
                 headers {
                     append(HttpHeaders.Authorization, "Bearer $token")
-                    contentType(ContentType.Application.Json)
+                    contentType(ContentType.Application.Json) // Define el cuerpo como JSON
                 }
-                setBody(tarea)
+                setBody(tarea) // Envia el objeto tarea como cuerpo de la solicitud
             }
             if (response.status.isSuccess()) {
                 val responseBodyText = response.bodyAsText()
-                Json.decodeFromString<Tarea>(responseBodyText)
+                Json.decodeFromString<Tarea>(responseBodyText) // Decodifica la respuesta a una tarea
             } else {
                 null
             }
@@ -93,11 +94,11 @@ class TareaService(private val client: HttpClient) {
                     append(HttpHeaders.Authorization, "Bearer $token")
                     contentType(ContentType.Application.Json)
                 }
-                setBody(tarea)
+                setBody(tarea) // Envia el objeto tarea con los datos actualizados
             }
             if (response.status.isSuccess()) {
                 val responseBodyText = response.bodyAsText()
-                Json.decodeFromString<Tarea>(responseBodyText)
+                Json.decodeFromString<Tarea>(responseBodyText) // Decodifica la respuesta a una tarea actualizada
             } else {
                 null
             }
@@ -115,7 +116,7 @@ class TareaService(private val client: HttpClient) {
                     append(HttpHeaders.Authorization, "Bearer $token")
                 }
             }
-            response.status.isSuccess()
+            response.status.isSuccess() // Retorna true si la respuesta indica éxito
         } catch (e: Exception) {
             Log.e("TareaService", "Error al eliminar tarea: ${e.message}")
             false
@@ -133,7 +134,7 @@ class TareaService(private val client: HttpClient) {
             }
             if (response.status.isSuccess()) {
                 val responseBodyText = response.bodyAsText()
-                Json.decodeFromString<List<Tarea>>(responseBodyText)
+                Json.decodeFromString<List<Tarea>>(responseBodyText) // Decodifica la respuesta a una lista de tareas
             } else {
                 null
             }

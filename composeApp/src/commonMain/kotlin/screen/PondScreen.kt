@@ -41,9 +41,9 @@ import moe.tlaster.precompose.navigation.Navigator
 import viewModel.EstanqueViewModel
 import viewModel.UsuarioViewModel
 
+// --- Pantalla de Estanques ---
 @Composable
 fun PondScreen(
-
     navigator: Navigator,
     usuarioViewModel: UsuarioViewModel,
     estanqueViewModel: EstanqueViewModel
@@ -52,14 +52,17 @@ fun PondScreen(
     val estanquesByUsuario = usuarioViewModel.estanquesByUsuario.value
     val errorMessage = remember { mutableStateOf<String?>(null) }
 
+    // Efecto que se ejecuta cuando el usuario cambia
     LaunchedEffect(usuario) {
         usuario?.let {
+            // Carga los estanques asociados al usuario
             usuarioViewModel.loadEstanquesByUsuario(it.idUsuario,
                 onError = { errorMessage.value = "Error al cargar estanques" }
             )
         }
     }
 
+    // Diseño principal de la pantalla
     Column(
         modifier = Modifier
             .fillMaxSize()
@@ -67,6 +70,7 @@ fun PondScreen(
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
         if (estanquesByUsuario != null) {
+            // Muestra una cuadrícula adaptable con los estanques
             LazyVerticalGrid(
                 columns = GridCells.Adaptive(minSize = 150.dp),
                 contentPadding = PaddingValues(8.dp),
@@ -76,26 +80,28 @@ fun PondScreen(
                 items(estanquesByUsuario.listaEstanque.size) { index ->
                     val estanque = estanquesByUsuario.listaEstanque[index]
                     EstanqueCard(
-                        estanqueName = "Estanque: ${estanque.idEstanque.toString()}",
+                        estanqueName = "Estanque: ${estanque.idEstanque}",
                         plantImage = getImageResourceByName("lechuga"),
-                        // status = Status.GOOD,
+                        // status = Status.GOOD, // Puedes agregar el estado si lo necesitas
                         onClick = {
-                            // Registro en consola
+                            // Registro en la consola al hacer clic
                             Log.d("EstanqueClick", "Estanque ${estanque.idEstanque} seleccionado")
-                            // Cargar los datos de NoSQL al hacer clic en el estanque
+                            // Carga los datos del estanque seleccionado
                             estanqueViewModel.loadEstanqueNoSQLById(estanque.idEstanque.toInt())
                             estanqueViewModel.loadEstanqueById(estanque.idEstanque)
-                            // Navegar a la pantalla de sensores pasando el ID del estanque
+                            // Navega a la pantalla de sensores con el ID del estanque
                             navigator.navigate("/sensorScreen/${estanque.idEstanque}")
                         },
-                        buttons = {}
+                        buttons = {} // Puedes agregar botones adicionales si lo requieres
                     )
                 }
             }
         } else {
+            // Mensaje de carga o de error si no hay estanques
             Text(text = "Cargando estanques o no se encontraron estanques.")
         }
 
+        // Mostrar mensaje de error si existe
         errorMessage.value?.let {
             Text(text = it, color = Color.Red, style = MaterialTheme.typography.body2)
         }
@@ -103,42 +109,43 @@ fun PondScreen(
 }
 
 
+// --- Elemento de datos de sensor ---
 @Composable
 fun SensorDataItem(
     context: Context,
     label: String,
-    value: Float, // Valor actual del sensor
-    range: Pair<Float, Float>, // El rango permitido (min, max)
+    value: Float,             // Valor actual del sensor
+    range: Pair<Float, Float>, // Rango permitido (mínimo, máximo)
     imageName: String,
     color: Color,
     sensorId: Int
-
 ) {
     val showTooltip = remember { mutableStateOf(false) }
     var isNotificationSent by remember { mutableStateOf(false) }
     val (minRange, maxRange) = range
 
+    // Calcula el progreso para el indicador circular, normalizado entre 0 y 1
     val progress = ((value - minRange) / (maxRange - minRange)).coerceIn(0f, 1f)
 
-// Verificar si el valor del sensor está fuera del rango
+    // Verificar si el valor del sensor está fuera del rango
     if (value < minRange || value > maxRange) {
         if (!isNotificationSent) {  // Si aún no se ha enviado la notificación
             val alertMessage =
                 "$label está fuera del rango ($minRange - $maxRange). Valor actual: $value"
             Log.d("SensorDataItem", alertMessage)
 
-            // Enviar la notificación
+            // Aquí podrías implementar la lógica para enviar una notificación al usuario
 
             // Marcar que ya se envió la notificación
             isNotificationSent = true
         }
     } else {
-        // Si el valor del sensor vuelve al rango normal, resetear el estado
+        // Si el valor vuelve al rango normal, resetear el estado
         isNotificationSent = false
         Log.d("SensorDataItem", "$label dentro del rango: $value (rango: $minRange - $maxRange)")
     }
 
-
+    // Diseño del elemento de sensor
     Box(
         modifier = Modifier
             .padding(8.dp)
@@ -147,7 +154,7 @@ fun SensorDataItem(
         Card(
             shape = RoundedCornerShape(8.dp),
             modifier = Modifier
-                .clickable { showTooltip.value = !showTooltip.value }
+                .clickable { showTooltip.value = !showTooltip.value } // Al hacer clic, muestra información adicional
                 .fillMaxSize(),
             elevation = 4.dp
         ) {
@@ -155,11 +162,13 @@ fun SensorDataItem(
                 contentAlignment = Alignment.Center,
                 modifier = Modifier.fillMaxSize()
             ) {
+                // Indicador circular con el valor del sensor
                 CircularProgressWithText(
                     progress = progress,
                     text = "${value.toInt()}",
                     color = color
                 )
+                // Imagen del sensor en la esquina superior derecha
                 Image(
                     painter = painterResource(id = getImageRsourceSensorByName(imageName)),
                     contentDescription = label,
@@ -171,6 +180,7 @@ fun SensorDataItem(
             }
         }
 
+        // Popup que muestra detalles adicionales al hacer clic
         if (showTooltip.value) {
             Popup(
                 alignment = Alignment.Center,
@@ -203,6 +213,7 @@ fun SensorDataItem(
                             color = Color.Gray,
                             modifier = Modifier.padding(bottom = 8.dp)
                         )
+                        // Botón para cerrar el popup
                         CustomButton(text = "Cerrar", onClick = { showTooltip.value = false })
                     }
                 }
@@ -211,24 +222,28 @@ fun SensorDataItem(
     }
 }
 
+// --- Indicador circular con texto ---
 @Composable
 fun CircularProgressWithText(progress: Float, text: String, color: Color) {
     Box(
         contentAlignment = Alignment.Center,
         modifier = Modifier.size(100.dp)
     ) {
+        // Indicador circular de fondo (100%)
         CircularProgressIndicator(
             progress = 1f,
             modifier = Modifier
                 .size(100.dp)
-                .graphicsLayer { alpha = 0.3f },
+                .graphicsLayer { alpha = 0.3f }, // Transparencia para el fondo
             color = color.copy(alpha = 0.3f)
         )
+        // Indicador circular del progreso actual
         CircularProgressIndicator(
             progress = progress,
             modifier = Modifier.size(100.dp),
             color = color
         )
+        // Texto con el valor actual en el centro
         Text(
             text = text,
             style = MaterialTheme.typography.body1,
@@ -237,40 +252,13 @@ fun CircularProgressWithText(progress: Float, text: String, color: Color) {
     }
 }
 
-@Composable
-fun EstanqueDetailsScreen(estanqueId: Int, estanqueViewModel: EstanqueViewModel) {
-    val selectedEstanqueNoSQL by estanqueViewModel.selectedEstanqueNoSQL
-    val errorNoSQLEstMessage by estanqueViewModel.errorMessage
 
-    // Cargar los datos del estanque en NoSQL
-    LaunchedEffect(estanqueId) {
-        estanqueViewModel.loadEstanqueNoSQLById(estanqueId)
-    }
 
-    Column(
-        modifier = Modifier
-            .fillMaxSize()
-            .padding(16.dp),
-        horizontalAlignment = Alignment.CenterHorizontally
-    ) {
-        Text(text = "Detalles del estanque: $estanqueId")
-
-        // Mostrar los datos de los sensores del estanque seleccionado
-        selectedEstanqueNoSQL?.let { estanque ->
-            Text(text = "Temperatura: ${estanque.deviceData.temperature}°C")
-            Text(text = "Humedad: ${estanque.deviceData.humidity}%")
-            // Añadir más datos según el modelo
-        }
-
-        errorNoSQLEstMessage?.let {
-            Text(text = "Error: $it", color = Color.Red)
-        }
-    }
-}
-
+// --- Vista previa para desarrollo ---
 @Preview(showBackground = true)
 @Composable
 fun PreviewSimpleDashboardLayout() {
-    //SensorDataItem(label = "Temperatura", value = "", imageName = "temperatura", color = Color.Blue, maxValue = 100)
-
+    // Puedes llamar a tus funciones composables aquí para ver una vista previa
+    // Por ejemplo:
+    // PondScreen(navigator = ..., usuarioViewModel = ..., estanqueViewModel = ...)
 }

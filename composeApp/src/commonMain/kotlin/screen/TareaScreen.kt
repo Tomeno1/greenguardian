@@ -22,22 +22,23 @@ fun TareasPendientesScreen(
     tareaViewModel: TareaViewModel,
     userId: Long // ID de usuario que se pasará desde el nivel superior
 ) {
+    // Variables de estado para el nombre y la descripción de una nueva tarea, y el filtro de tareas
     var nuevaTareaNombre by remember { mutableStateOf("") }
     var nuevaTareaDescripcion by remember { mutableStateOf("") }
     var filtroSeleccionado by remember { mutableStateOf("Todas") }
 
-    // Cargar tareas del usuario al iniciar la pantalla
+    // Carga de tareas del usuario al inicializar la pantalla
     LaunchedEffect(userId) {
         tareaViewModel.loadTareasByIdUsuario(userId)
     }
 
-    val tareas = tareaViewModel.tareas
+    val tareas = tareaViewModel.tareas  // Lista de tareas cargadas desde el ViewModel
 
     Column(
         modifier = Modifier.fillMaxSize()
     ) {
         Card(
-            shape = RoundedCornerShape(16.dp),
+            shape = RoundedCornerShape(16.dp), // Bordes redondeados
             backgroundColor = MaterialTheme.colors.surface,
             modifier = Modifier
                 .fillMaxWidth()
@@ -47,7 +48,8 @@ fun TareasPendientesScreen(
             Column(
                 modifier = Modifier.padding(16.dp)
             ) {
-                Text("Tareas Pendientes", style = MaterialTheme.typography.h6, fontWeight = FontWeight.Bold )
+                // Encabezado de la sección de tareas
+                Text("Tareas Pendientes", style = MaterialTheme.typography.h6, fontWeight = FontWeight.Bold)
                 Text(
                     "Gestiona las tareas de tu cultivo hidropónico",
                     style = MaterialTheme.typography.body2,
@@ -56,7 +58,7 @@ fun TareasPendientesScreen(
 
                 Spacer(modifier = Modifier.height(16.dp))
 
-                // Formulario de Nueva Tarea
+                // Formulario para añadir una nueva tarea
                 Column(
                     verticalArrangement = Arrangement.spacedBy(8.dp),
                     modifier = Modifier.fillMaxWidth()
@@ -93,12 +95,13 @@ fun TareasPendientesScreen(
                         onClick = {
                             if (nuevaTareaNombre.isNotEmpty()) {
                                 val nuevaTarea = Tarea(
-                                    id = 0, // ID debería ser generado por el backend
+                                    id = 0, // ID será generado por el backend
                                     nombre = nuevaTareaNombre,
                                     descripcion = nuevaTareaDescripcion,
                                     activa = true,
-                                    idUsuario = userId // Pasar el ID del usuario actual
+                                    idUsuario = userId
                                 )
+                                // Crear nueva tarea en el ViewModel y limpiar los campos de entrada
                                 tareaViewModel.createTarea(
                                     tarea = nuevaTarea,
                                     onSuccess = {
@@ -120,12 +123,13 @@ fun TareasPendientesScreen(
 
                 Spacer(modifier = Modifier.height(16.dp))
 
-                // Filtros de Tareas
+                // Filtros para seleccionar qué tareas ver
                 Row(
                     verticalAlignment = Alignment.CenterVertically,
                     modifier = Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.SpaceAround
                 ) {
+                    // Opciones de filtro: "Todas", "Pendientes" y "Completadas"
                     listOf("Todas", "Pendientes", "Completadas").forEach { filtro ->
                         Row(verticalAlignment = Alignment.CenterVertically) {
                             RadioButton(
@@ -140,23 +144,24 @@ fun TareasPendientesScreen(
 
                 Spacer(modifier = Modifier.height(16.dp))
 
-                // Lista de Tareas
+                // Lista de tareas filtradas según la selección
                 tareas.filter {
                     when (filtroSeleccionado) {
-                        "Pendientes" -> it.activa
-                        "Completadas" -> !it.activa
-                        else -> true
+                        "Pendientes" -> it.activa  // Tareas activas
+                        "Completadas" -> !it.activa  // Tareas inactivas
+                        else -> true  // Todas las tareas
                     }
                 }.forEach { tarea ->
                     TareaItem(
                         tarea = tarea,
-                        onDelete = { tareaViewModel.deleteTarea(tarea.id, {}, {}) },
+                        onDelete = { tareaViewModel.deleteTarea(tarea.id, {}, {}) },  // Función para eliminar la tarea
                         onComplete = {
                             tareaViewModel.updateTarea(
                                 tarea.id,
-                                tarea.copy(activa = false),
+                                tarea.copy(activa = false),  // Actualiza el estado a completado
                                 {},
-                                {})
+                                {}
+                            )
                         }
                     )
                     Spacer(modifier = Modifier.height(8.dp))
@@ -167,6 +172,7 @@ fun TareasPendientesScreen(
 }
 
 
+//Componente en donde se muestra cada tarea
 @Composable
 fun TareaItem(tarea: Tarea, onDelete: () -> Unit, onComplete: () -> Unit) {
     Card(
@@ -185,16 +191,20 @@ fun TareaItem(tarea: Tarea, onDelete: () -> Unit, onComplete: () -> Unit) {
             horizontalArrangement = Arrangement.SpaceBetween
         ) {
             Column {
-                // Cambiamos el estilo del nombre de la tarea para que se tache si está completada
+                // Muestra el nombre y descripción de la tarea, tachados si la tarea está completada
                 Text(
                     text = tarea.nombre,
                     style = MaterialTheme.typography.body1.copy(
                         textDecoration = if (tarea.activa) null else TextDecoration.LineThrough
                     )
                 )
-                Text(tarea.descripcion, style = MaterialTheme.typography.body2.copy(
-                    textDecoration = if (tarea.activa) null else TextDecoration.LineThrough
-                ), color = Color.Gray)
+                Text(
+                    tarea.descripcion,
+                    style = MaterialTheme.typography.body2.copy(
+                        textDecoration = if (tarea.activa) null else TextDecoration.LineThrough
+                    ),
+                    color = Color.Gray
+                )
             }
             Row(verticalAlignment = Alignment.CenterVertically) {
                 Text(
@@ -218,6 +228,7 @@ fun TareaItem(tarea: Tarea, onDelete: () -> Unit, onComplete: () -> Unit) {
         }
     }
 }
+
 
 
 

@@ -18,32 +18,33 @@ class EstanqueViewModel(private val tokenViewModel: TokenViewModel) : ViewModel(
         Log.d("EstanqueViewModel", "EstanqueViewModel creado")
     }
 
+    // Servicios de estanques para realizar operaciones SQL y NoSQL
     private val estanqueService = EstanqueService(HttpClientProvider.client)
     private val estanqueNoSQLService = EstanqueNoSQLService(HttpClientProvider.client)
 
-    // Lista de estanques observables
+    // Lista de estanques observables (SQL)
     var estanques = mutableStateListOf<Estanque>()
         private set
 
-    // Estado del estanque seleccionado
+    // Estado del estanque seleccionado (SQL)
     var selectedEstanque = mutableStateOf<Estanque?>(null)
         private set
 
-    // Estado del estanque NoSQL
+    // Estado del estanque NoSQL seleccionado
     var selectedEstanqueNoSQL = mutableStateOf<EstanqueNoSQL?>(null)
         private set
 
-    // Error message for NoSQL
+    // Mensaje de error para operaciones NoSQL
     var errorMessage = mutableStateOf<String?>(null)
         private set
 
-    // Cargar estanques SQL
+    // Función para cargar todos los estanques desde la base de datos SQL
     fun loadEstanques() {
         viewModelScope.launch {
             try {
                 val result = estanqueService.getAllEstanques()
                 if (result != null) {
-                    estanques.clear()
+                    estanques.clear() // Limpiar lista antes de agregar los resultados
                     estanques.addAll(result)
                 }
             } catch (e: Exception) {
@@ -52,20 +53,20 @@ class EstanqueViewModel(private val tokenViewModel: TokenViewModel) : ViewModel(
         }
     }
 
-    // Cargar un estanque SQL por ID
+    // Función para cargar un estanque específico por su ID desde la base de datos SQL
     fun loadEstanqueById(idEstanque: Long) {
         viewModelScope.launch {
             Log.d("EstanqueViewModel", "Iniciando carga de estanque con ID: $idEstanque")
 
             try {
-                // Supón que tienes el token almacenado en `tokenViewModel.token`
+                // Obtiene el token de autenticación desde el tokenViewModel
                 val token = tokenViewModel.token
                 if (token == null) {
                     Log.e("EstanqueViewModel", "Token no disponible")
                     return@launch
                 }
 
-                // Llama a `getEstanqueById` con el token
+                // Llama a la función del servicio SQL para obtener el estanque por ID
                 val result = estanqueService.getEstanqueById(token, idEstanque)
                 if (result != null) {
                     selectedEstanque.value = result
@@ -79,16 +80,17 @@ class EstanqueViewModel(private val tokenViewModel: TokenViewModel) : ViewModel(
         }
     }
 
-
+    // Función para cargar el último estanque de la base de datos NoSQL usando su ID
     fun loadEstanqueNoSQLById(idEstanque: Int) {
         viewModelScope.launch {
-            Log.d("EstanqueViewModel", "Iniciando carga de Estanque NoSQL con ID: $idEstanque") // Registro al iniciar
+            Log.d("EstanqueViewModel", "Iniciando carga de Estanque NoSQL con ID: $idEstanque")
 
-            // Limpiar el estado anterior
+            // Limpia el estado anterior del estanque y mensajes de error
             selectedEstanqueNoSQL.value = null
             errorMessage.value = null
 
             try {
+                // Intenta obtener el último estanque NoSQL por ID
                 val result = estanqueNoSQLService.getUltimoEstanque(idEstanque)
                 result.onSuccess { data ->
                     selectedEstanqueNoSQL.value = data
@@ -104,15 +106,14 @@ class EstanqueViewModel(private val tokenViewModel: TokenViewModel) : ViewModel(
         }
     }
 
-
-    // Crear un nuevo estanque SQL
+    // Función para crear un nuevo estanque en la base de datos SQL
     fun createEstanque(estanque: Estanque, onSuccess: () -> Unit, onError: (String) -> Unit) {
         viewModelScope.launch {
             try {
                 val result = estanqueService.createEstanque(estanque)
                 if (result != null) {
-                    estanques.add(result)
-                    onSuccess()
+                    estanques.add(result) // Añadir el estanque a la lista local
+                    onSuccess() // Callback de éxito
                 } else {
                     onError("No se pudo crear el estanque")
                 }
@@ -123,7 +124,7 @@ class EstanqueViewModel(private val tokenViewModel: TokenViewModel) : ViewModel(
         }
     }
 
-    // Actualizar un estanque SQL
+    // Función para actualizar un estanque en la base de datos SQL por ID
     fun updateEstanque(idEstanque: Long, estanque: Estanque, onSuccess: () -> Unit, onError: (String) -> Unit) {
         val token = tokenViewModel.token
         viewModelScope.launch {
@@ -133,16 +134,15 @@ class EstanqueViewModel(private val tokenViewModel: TokenViewModel) : ViewModel(
                     val index = estanques.indexOfFirst { it.idEstanque == idEstanque }
 
                     if (index >= 0) {
-                        // Actualizar el estanque en la lista de estanques
-                        estanques[index] = result
+                        estanques[index] = result // Actualizar el estanque en la lista local
                     }
 
-                    // También actualizar el estanque seleccionado si coincide con el ID que estamos actualizando
+                    // También actualizar el estanque seleccionado si coincide con el ID
                     if (selectedEstanque.value?.idEstanque == idEstanque) {
-                        selectedEstanque.value = result // Actualizamos el selectedEstanque
+                        selectedEstanque.value = result
                     }
 
-                    onSuccess() // Llamar al callback de éxito
+                    onSuccess() // Callback de éxito
                 } else {
                     onError("No se pudo actualizar el estanque")
                 }
@@ -153,15 +153,14 @@ class EstanqueViewModel(private val tokenViewModel: TokenViewModel) : ViewModel(
         }
     }
 
-
-    // Eliminar un estanque SQL
+    // Función para eliminar un estanque de la base de datos SQL
     fun deleteEstanque(idEstanque: Long, onSuccess: () -> Unit, onError: (String) -> Unit) {
         viewModelScope.launch {
             try {
                 val result = estanqueService.deleteEstanque(idEstanque)
                 if (result) {
-                    estanques.removeAll { it.idEstanque == idEstanque }
-                    onSuccess()
+                    estanques.removeAll { it.idEstanque == idEstanque } // Remover el estanque de la lista local
+                    onSuccess() // Callback de éxito
                 } else {
                     onError("No se pudo eliminar el estanque")
                 }

@@ -5,9 +5,13 @@ import androidx.compose.runtime.snapshots.SnapshotStateList
 import components.getImageResourceByName
 import model.Plant
 
+
+// --- PlantDataManager ---
+// Objeto que gestiona una lista de plantas para el sistema hidropónico,
+// proporcionando acceso y funciones para manipular los datos de las plantas.
 object PlantDataManager {
 
-    // Lista de plantas gestionada por el DataManager
+    // Lista de plantas gestionada internamente, con estado mutable para cambios dinámicos en la UI
     private val _plants = mutableStateListOf(
         Plant(
             name = "Lechuga",
@@ -134,7 +138,7 @@ object PlantDataManager {
         // Agrega más plantas aquí si es necesario
     )
 
-    // Acceso público a la lista de plantas como una SnapshotStateList
+    // Acceso público a la lista de plantas como una SnapshotStateList, que permite observar los cambios de estado en la UI
     val plants: SnapshotStateList<Plant> get() = _plants
 
     // Función para obtener una planta específica por nombre

@@ -29,77 +29,67 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import model.Status
 import techminds.greenguardian.R
 
-val DarkGreen = Color(0xFF006400) // Verde oscuro
-val DarkYellow = Color(0xFFCCCC00) // Amarillo oscuro
-val DarkRed = Color(0xFF8B0000) // Rojo oscuro
 
-
+// --- Composable EstanqueCard ---
+// Representa una tarjeta informativa sobre un estanque, incluyendo imagen, nombre y botones de acción.
 @Composable
 fun EstanqueCard(
-    estanqueName: String,
-    plantImage: Int,
-    //status: Status,
-    onClick: () -> Unit,
-    buttons: @Composable () -> Unit
+    estanqueName: String,  // Nombre del estanque que se muestra en la tarjeta
+    plantImage: Int,       // Imagen asociada al estanque, representada por un ID de recurso
+    onClick: () -> Unit,   // Acción a realizar cuando se hace clic en la tarjeta
+    buttons: @Composable () -> Unit // Composable que permite añadir botones de acción a la tarjeta
 ) {
-    /*val statusColor = when (status) {
-        Status.GOOD -> DarkGreen
-        Status.PRECAUTION -> DarkYellow
-        Status.WARNING -> DarkRed
-    }*/
-
     Card(
-        shape = RoundedCornerShape(8.dp),
-        elevation = 4.dp,
+        shape = RoundedCornerShape(8.dp),  // Esquina redondeada de la tarjeta
+        elevation = 4.dp,  // Sombra de elevación
         modifier = Modifier
-            .padding(8.dp)
-            .fillMaxWidth()
-            .heightIn(min = 200.dp)
-            .clickable(onClick = onClick)  // Hacemos la tarjeta clickeable
+            .padding(8.dp)  // Espacio alrededor de la tarjeta
+            .fillMaxWidth()  // Ancho de la tarjeta, adaptado al contenedor
+            .heightIn(min = 200.dp)  // Altura mínima de la tarjeta
+            .clickable(onClick = onClick)  // Hace que la tarjeta sea clickeable
     ) {
+        // Disposición vertical de los elementos dentro de la tarjeta
         Column(
-            horizontalAlignment = Alignment.CenterHorizontally,
+            horizontalAlignment = Alignment.CenterHorizontally,  // Alineación centrada
             modifier = Modifier
                 .fillMaxSize()
-                .padding(8.dp)
+                .padding(8.dp)  // Relleno interno de la tarjeta
         ) {
+            // Imagen del estanque en un contenedor `Box` para alineación personalizada
             Box(
-                contentAlignment = Alignment.TopEnd,
-                modifier = Modifier.fillMaxWidth()
+                contentAlignment = Alignment.TopEnd,  // Alinea el contenido al borde superior derecho
+                modifier = Modifier.fillMaxWidth()  // Ancho completo para la imagen
             ) {
                 Image(
-                    painter = painterResource(id = plantImage),
-                    contentDescription = estanqueName,
+                    painter = painterResource(id = plantImage),  // Recurso de imagen pasado como parámetro
+                    contentDescription = estanqueName,  // Descripción para accesibilidad
                     modifier = Modifier
-                        .fillMaxWidth()
-                        .height(120.dp),
-                    contentScale = ContentScale.Crop
+                        .fillMaxWidth()  // Imagen adaptada al ancho del contenedor
+                        .height(120.dp),  // Altura específica para la imagen
+                    contentScale = ContentScale.Crop  // Escala la imagen para llenar el contenedor
                 )
                 Box(
                     modifier = Modifier
-                        .size(16.dp)
-                       // .background(statusColor, shape = CircleShape)
-                        .align(Alignment.TopEnd)
+                        .size(16.dp)  // Tamaño fijo para el indicador de estado visual
+                        .align(Alignment.TopEnd)  // Alinea el indicador en la esquina superior derecha
                 )
             }
-            Spacer(modifier = Modifier.height(8.dp))
+            Spacer(modifier = Modifier.height(8.dp))  // Espacio entre la imagen y el nombre
+
+            // Texto que muestra el nombre del estanque
             Text(
                 text = estanqueName,
-                fontSize = 18.sp,
-                fontWeight = FontWeight.Bold,
-                color = Color.Black,
-                modifier = Modifier.align(Alignment.Start)
+                fontSize = 18.sp,  // Tamaño de fuente
+                fontWeight = FontWeight.Bold,  // Negrita para resaltar el nombre
+                color = Color.Black,  // Color del texto
+                modifier = Modifier.align(Alignment.Start)  // Alineación a la izquierda
             )
-           /* Text(
-                text = "Estado: ${status.name}",
-                fontSize = 14.sp,
-                color = statusColor,
-                modifier = Modifier.align(Alignment.Start)
-            )*/
-            Spacer(modifier = Modifier.height(8.dp))
+
+            Spacer(modifier = Modifier.height(8.dp))  // Espacio entre el nombre y el área de botones
+
+            // Contenedor para los botones de acción adicionales
             buttons()
         }
     }

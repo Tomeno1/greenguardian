@@ -19,21 +19,22 @@ import model.EstanqueByUsuarioResponse
 import model.PromedioEstanques
 import model.Usuario
 
+// Servicio que permite realizar operaciones CRUD sobre usuarios y obtener información de estanques relacionados
 class UserService(private val client: HttpClient) {
-    private val baseUrl = "http://192.168.1.98:8080/api/usuarios"
+    private val baseUrl = "http://192.168.1.98:8080/api/usuarios" // URL base para el endpoint de usuarios
 
-    // Obtener un usuario por ID con token de autenticación
+    // Obtener un usuario específico por ID con autenticación
     suspend fun getUser(token: String, userId: Long): Usuario? {
         return try {
             val response: HttpResponse = client.get("$baseUrl/$userId") {
                 headers {
-                    append(HttpHeaders.Authorization, "Bearer $token")
-                    accept(ContentType.Application.Json)
+                    append(HttpHeaders.Authorization, "Bearer $token") // Añadir token de autenticación
+                    accept(ContentType.Application.Json)               // Espera JSON como respuesta
                 }
             }
             if (response.status.isSuccess()) {
                 val responseBodyText = response.bodyAsText()
-                json.decodeFromString<Usuario>(responseBodyText)
+                json.decodeFromString<Usuario>(responseBodyText) // Deserializar a un objeto Usuario
             } else {
                 null
             }
@@ -42,16 +43,16 @@ class UserService(private val client: HttpClient) {
         }
     }
 
-    // Actualizar un usuario por ID con token de autenticación
+    // Actualizar un usuario por ID usando un token de autenticación
     suspend fun updateUser(token: String, usuario: Usuario): Boolean {
         Log.d("UserService", "Iniciando updateUser para usuario: ${usuario.idUsuario}")
         return try {
             val response: HttpResponse = client.put("$baseUrl/${usuario.idUsuario}") {
                 headers {
-                    append(HttpHeaders.Authorization, "Bearer $token")
-                    contentType(ContentType.Application.Json)
+                    append(HttpHeaders.Authorization, "Bearer $token") // Añadir token
+                    contentType(ContentType.Application.Json)           // Definir JSON como tipo de contenido
                 }
-                setBody(usuario)
+                setBody(usuario) // Enviar datos del usuario como cuerpo de la solicitud
             }
             val success = response.status.isSuccess()
             Log.d("UserService", "updateUser ${if (success) "éxito" else "fallo"} con status: ${response.status}")
@@ -62,7 +63,7 @@ class UserService(private val client: HttpClient) {
         }
     }
 
-    // Eliminar un usuario por ID con token de autenticación
+    // Eliminar un usuario por ID usando token de autenticación
     suspend fun deleteUser(token: String, userId: Long): Boolean {
         Log.d("UserService", "Iniciando deleteUser para userId: $userId")
         return try {
@@ -80,9 +81,7 @@ class UserService(private val client: HttpClient) {
         }
     }
 
-
-
-    // Obtener los estanques de un usuario por ID con token de autenticación
+    // Obtener estanques asociados a un usuario específico por ID
     suspend fun getEstanquesByUsuario(token: String, userId: Long): EstanqueByUsuarioResponse? {
         Log.d("UserService", "Iniciando getEstanquesByUsuario para userId: $userId")
         return try {
@@ -95,7 +94,7 @@ class UserService(private val client: HttpClient) {
             if (response.status.isSuccess()) {
                 val responseBodyText = response.bodyAsText()
                 Log.d("UserService", "getEstanquesByUsuario éxito: $responseBodyText")
-                json.decodeFromString<EstanqueByUsuarioResponse>(responseBodyText)
+                json.decodeFromString<EstanqueByUsuarioResponse>(responseBodyText) // Decodifica a EstanqueByUsuarioResponse
             } else {
                 Log.w("UserService", "getEstanquesByUsuario fallo con status: ${response.status}")
                 null
@@ -106,7 +105,7 @@ class UserService(private val client: HttpClient) {
         }
     }
 
-    // Obtener el promedio de estanques de un usuario por ID con token de autenticación
+    // Obtener el promedio de medidas de estanques asociados a un usuario específico
     suspend fun getPromedioEstanques(token: String, userId: Long): PromedioEstanques? {
         Log.d("UserService", "Iniciando getPromedioEstanques para userId: $userId")
         return try {
@@ -119,7 +118,7 @@ class UserService(private val client: HttpClient) {
             if (response.status.isSuccess()) {
                 val responseBodyText = response.bodyAsText()
                 Log.d("UserService", "getPromedioEstanques éxito: $responseBodyText")
-                json.decodeFromString<PromedioEstanques>(responseBodyText)
+                json.decodeFromString<PromedioEstanques>(responseBodyText) // Deserializar a PromedioEstanques
             } else {
                 Log.w("UserService", "getPromedioEstanques fallo con status: ${response.status}")
                 null
@@ -129,5 +128,4 @@ class UserService(private val client: HttpClient) {
             null
         }
     }
-
 }

@@ -11,24 +11,30 @@ import io.ktor.http.contentType
 import io.ktor.http.isSuccess
 import model.MessageMqtt
 
+// Servicio para interactuar con el backend para publicar mensajes MQTT
 class MqttService(private val client: HttpClient) {
-    private val baseUrl = "http://192.168.1.98:8080/api/awsiot"
+    private val baseUrl = "http://192.168.1.98:8080/api/awsiot" // URL base de la API
 
+    // Función para publicar un mensaje MQTT en un tema específico
     suspend fun publishMessage(topic: String, message: MessageMqtt): Result<String> {
         return try {
+            // Realiza una solicitud POST al endpoint de publicación MQTT
             val response: HttpResponse = client.post("$baseUrl/publish") {
-                contentType(ContentType.Application.Json)
-                parameter("topic", topic)
-                setBody(message)
+                contentType(ContentType.Application.Json) // Establece el tipo de contenido como JSON
+                parameter("topic", topic) // Agrega el tema como parámetro en la URL
+                setBody(message) // Configura el mensaje en el cuerpo de la solicitud
             }
+
+            // Verifica si la respuesta es exitosa
             if (response.status.isSuccess()) {
-                Result.success(response.bodyAsText())  // Retorna el cuerpo de la respuesta como resultado de éxito
+                Result.success(response.bodyAsText())  // Retorna el cuerpo de la respuesta en caso de éxito
             } else {
+                // Devuelve un error si la publicación falla
                 Result.failure(Exception("Error al publicar el mensaje en el tema $topic"))
             }
         } catch (e: Exception) {
             e.printStackTrace()
-            Result.failure(e)  // Manejo del error en caso de excepción
+            Result.failure(e)  // Manejo de errores en caso de excepción
         }
     }
 }

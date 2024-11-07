@@ -17,66 +17,71 @@ import model.Usuario
 import moe.tlaster.precompose.viewmodel.ViewModel
 import moe.tlaster.precompose.viewmodel.viewModelScope
 
+// ViewModel que gestiona el estado del usuario y funciones relacionadas
 class UsuarioViewModel(private val tokenViewModel: TokenViewModel) : ViewModel() {
+
+    // Inicialización y registro del ViewModel
     init {
         Log.d("UsuarioViewModel", "UsuarioViewModel creado")
     }
 
+    // Servicios de usuario y autenticación para el ViewModel
     private val userService = UserService(HttpClientProvider.client)
     private val authService = AuthService(HttpClientProvider.client)
 
+    // Estado del usuario actualmente autenticado
     var usuario: Usuario? by mutableStateOf(null)
         private set
 
+    // Lista de todos los usuarios (por ejemplo, para administradores)
     var usuarios: List<Usuario> by mutableStateOf(emptyList())
         private set
 
+    // URI de la imagen de perfil del usuario
     var userImageUri: Uri? by mutableStateOf(null)
         private set
 
-    // Lista de estanques relacionados con el usuario
+    // Estado de los estanques del usuario
     var estanquesByUsuario = mutableStateOf<EstanqueByUsuarioResponse?>(null)
         private set
 
-    // Actualizar la URI de la imagen del usuario
+    // Función para actualizar la URI de la imagen de perfil
     fun updateUserImageUri(newUri: Uri) {
         userImageUri = newUri
     }
 
+    // Función para limpiar la imagen de perfil
     fun clearUserImage() {
         userImageUri = null // Limpia la imagen del usuario
     }
 
-    // Variable para almacenar el promedio de estanques
+    // Variable que almacena el promedio de los valores de los estanques del usuario
     var promedioEstanques by mutableStateOf<PromedioEstanques?>(null)
         private set
 
-
-    // Actualizar la información del usuario actual
+    // Función para actualizar la información del usuario actual en el estado del ViewModel
     fun updateUser(newUsuario: Usuario) {
         usuario = newUsuario
     }
 
-    // Iniciar sesión de usuario
+    // Función para iniciar sesión
     fun loginUser(authUsuario: AuthUsuario, onSuccess: () -> Unit, onError: (String) -> Unit) {
         viewModelScope.launch {
             try {
-                // Llamada al servicio de autenticación
+                // Solicita un token de autenticación
                 val tokenResponse = authService.login(authUsuario)
 
                 if (tokenResponse != null) {
                     Log.d("Login", "Token recibido: ${tokenResponse.token}")
 
-                    // Validar token y obtener usuario
+                    // Valida el token y obtiene la información del usuario
                     val validatedUser = authService.validateToken(ResponseHttp(tokenResponse.token))
 
                     if (validatedUser != null) {
-                        // Actualizamos el usuario y el token en el ViewModel
                         usuario = validatedUser
                         Log.d("UsuarioViewModel", "Usuario logueado: $usuario")
                         tokenViewModel.updateToken(tokenResponse.token)
-
-                        onSuccess()  // Llamamos a la función de éxito
+                        onSuccess()  // Llama al callback de éxito
                     } else {
                         onError("No se pudo validar el token o obtener el usuario")
                     }
@@ -90,11 +95,11 @@ class UsuarioViewModel(private val tokenViewModel: TokenViewModel) : ViewModel()
         }
     }
 
-    // Cargar estanques de un usuario por ID con token de autenticación
+    // Cargar estanques asociados a un usuario por su ID
     fun loadEstanquesByUsuario(userId: Long, onError: (String) -> Unit = {}) {
         val token = tokenViewModel.token
 
-
+        // Verifica si el token es válido
         if (token.isNullOrBlank()) {
             onError("Token de acceso inválido o no disponible")
             return
@@ -110,7 +115,6 @@ class UsuarioViewModel(private val tokenViewModel: TokenViewModel) : ViewModel()
                     Log.e("UsuarioViewModel", "La respuesta de estanques es nula para el usuario $userId")
                     onError("No se pudieron cargar los estanques del usuario")
                 }
-
             } catch (e: Exception) {
                 Log.e("UsuarioViewModel", "Error al cargar los estanques: ${e.message}")
                 onError("Error al cargar los estanques del usuario")
@@ -122,6 +126,7 @@ class UsuarioViewModel(private val tokenViewModel: TokenViewModel) : ViewModel()
     fun loadPromedioEstanques(userId: Long, onError: (String) -> Unit = {}) {
         val token = tokenViewModel.token
 
+        // Verifica si el token es válido
         if (token.isNullOrBlank()) {
             onError("Token de acceso inválido o no disponible")
             return
@@ -143,7 +148,7 @@ class UsuarioViewModel(private val tokenViewModel: TokenViewModel) : ViewModel()
         }
     }
 
-    // Editar la información de un usuario
+    // Función para editar información de un usuario
     fun editUser(usuario: Usuario, onSuccess: () -> Unit, onError: (String) -> Unit) {
         viewModelScope.launch {
             val currentToken = tokenViewModel.token
@@ -155,6 +160,7 @@ class UsuarioViewModel(private val tokenViewModel: TokenViewModel) : ViewModel()
             try {
                 val result = userService.updateUser(currentToken, usuario)
                 if (result) {
+                    // Actualiza la lista de usuarios
                     usuarios = usuarios.map {
                         if (it.idUsuario == usuario.idUsuario) usuario else it
                     }
@@ -169,7 +175,7 @@ class UsuarioViewModel(private val tokenViewModel: TokenViewModel) : ViewModel()
         }
     }
 
-    // Eliminar un usuario
+    // Función para eliminar un usuario
     fun deleteUser(userId: Long, onSuccess: () -> Unit, onError: (String) -> Unit) {
         viewModelScope.launch {
             val currentToken = tokenViewModel.token

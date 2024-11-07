@@ -62,83 +62,102 @@ import viewModel.UsuarioViewModel
 @Preview
 fun App() {
     PreComposeApp {
+        // Esta función define la estructura principal de la aplicación,
+        // configurando el sistema de navegación, el Drawer (menú lateral),
+        // la barra superior (TopAppBar) y las distintas pantallas (screens).
+        // Se crean servicios y ViewModels necesarios para el manejo de la lógica de negocio,
+        // y se establece la navegación entre pantallas, que incluyen login, home, tareas, lista de plantas,
+        // detalles de plantas, estanques, sensores, cámara y asistente de chat.
+        // También se configuran los colores del sistema y el comportamiento del Drawer.
+        // Inicializa el sistema de navegación
         val navigator = rememberNavigator()
 
-        // Crear las dependencias necesarias
-        val httpClient = HttpClientProvider.client
-        val openAIService = OpenAIService(httpClient)
-        val mqttService = MqttService(httpClient) // Crear el servicio MQTT
+        // --- Dependencias y ViewModels ---
 
-        // Crear los ViewModels y pasar las dependencias necesarias
+        // Configura los servicios de red y de inteligencia artificial necesarios para la aplicación
+        val httpClient = HttpClientProvider.client
+        val openAIService = OpenAIService(httpClient)  // Servicio para interacción con OpenAI
+        val mqttService = MqttService(httpClient)      // Servicio para el manejo de MQTT
+
+        // Crea y configura los ViewModels, que gestionan la lógica de negocio
         val chatViewModel = viewModel { ChatViewModel(openAIService) }
         val tokenViewModel = viewModel { TokenViewModel() }
-        val mqttViewModel = viewModel { MqttViewModel(mqttService) } // Pasamos el mqttService
+        val mqttViewModel = viewModel { MqttViewModel(mqttService) }
         val estanqueViewModel = viewModel { EstanqueViewModel(tokenViewModel) }
-        val userViewModel =
-            viewModel(keys = listOf(tokenViewModel)) { UsuarioViewModel(tokenViewModel) }
-        val tareaViewModel = viewModel { TareaViewModel(tokenViewModel) } // ViewModel de tareas
+        val userViewModel = viewModel { UsuarioViewModel(tokenViewModel) }
+        val tareaViewModel = viewModel { TareaViewModel(tokenViewModel) }
+
+        // --- Estado y configuración del Drawer ---
+
+        // Almacena la ruta actual y el estado del menú lateral (Drawer)
         var currentRoute by remember { mutableStateOf("/login") }
         val drawerState = rememberDrawerState(DrawerValue.Closed)
         val scope = rememberCoroutineScope()
 
+        // --- Colores del sistema ---
+
+        // Define los colores de la barra de estado y la barra de navegación
         SetSystemBarsColor(
-            statusBarColor = Color(0xFF00001B),
-            navigationBarColor = Color(0xFF00001B),
-            useDarkNavigationIcons = true
+            statusBarColor = Color(0xFF00001B),  // Fondo oscuro para la barra de estado
+            navigationBarColor = Color(0xFF00001B),  // Fondo oscuro para la barra de navegación
+            useDarkNavigationIcons = true  // Íconos claros para mejor contraste
         )
 
-        // Modal Navigation Drawer with DrawerContent
+        // --- Configuración del Drawer y Scaffold ---
+
+        // Configura el menú lateral (Drawer) para la navegación
         ModalNavigationDrawer(
             drawerState = drawerState,
-            gesturesEnabled = currentRoute != "/login" && userViewModel.usuario != null,
+            gesturesEnabled = currentRoute != "/login" && userViewModel.usuario != null, // Habilita gestos en pantallas fuera del login
             drawerContent = {
+                // Contenido del Drawer, con opciones de navegación y cierre de sesión
                 DrawerContent(
                     selectedItem = currentRoute,
-                    onItemSelected = { item ->
+                    onItemSelected = { item ->  // Cambia la ruta según el ítem seleccionado
                         currentRoute = item
-                        scope.launch { drawerState.close() }
-                        navigator.navigate(item)
+                        scope.launch { drawerState.close() }  // Cierra el Drawer después de seleccionar
+                        navigator.navigate(item)  // Navega a la ruta seleccionada
                     },
                     onLogout = {
-                        tokenViewModel.clearToken()
-                        userViewModel.clearUserImage()
-                        navigator.navigate("/login")
-                        scope.launch { drawerState.close() }
+                        tokenViewModel.clearToken()  // Limpia el token al cerrar sesión
+                        userViewModel.clearUserImage()  // Limpia la imagen del usuario actual
+                        navigator.navigate("/login")  // Redirige a la pantalla de login
+                        scope.launch { drawerState.close() }  // Cierra el Drawer
                     },
-                    usuarioViewModel = userViewModel
+                    usuarioViewModel = userViewModel  // Envía el usuario actual al contenido del Drawer
                 )
             },
             content = {
+                // Estructura principal de la interfaz con Scaffold
                 Scaffold(
-                    modifier = Modifier.background(Color(0xFFEFEFEF)), // Color de fondo por defecto
+                    modifier = Modifier.background(Color(0xFFEFEFEF)),  // Fondo gris claro para la interfaz
                     topBar = {
-                        if (currentRoute != "/login") {
+                        if (currentRoute != "/login") {  // Muestra la barra superior solo fuera del login
                             TopAppBar(
-                                backgroundColor = Color(0xFF00001B),
-                                contentColor = Color.White,
+                                backgroundColor = Color(0xFF00001B),  // Fondo oscuro para la barra
+                                contentColor = Color.White,  // Texto y elementos en blanco
                                 title = {
+                                    // Título centrado con el logo de la app y el nombre
                                     Box(
                                         modifier = Modifier.fillMaxWidth(),
                                         contentAlignment = Alignment.Center
                                     ) {
-                                        Row(
-                                            verticalAlignment = Alignment.CenterVertically
-                                        ) {
+                                        Row(verticalAlignment = Alignment.CenterVertically) {
                                             Image(
                                                 painter = painterResource(id = R.drawable.greenguardian_cube),
-                                                contentDescription = "Green Guardian",
-                                                modifier = Modifier.size(32.dp)
+                                                contentDescription = "Green Guardian",  // Descripción para accesibilidad
+                                                modifier = Modifier.size(32.dp)  // Tamaño del ícono
                                             )
                                             Spacer(modifier = Modifier.width(8.dp))
-                                            Text(text = "Green Guardian", color = Color.White)
+                                            Text(text = "Green Guardian", color = Color.White)  // Texto blanco
                                         }
                                     }
                                 },
                                 navigationIcon = {
-                                    if (currentRoute != "/home") {
+                                    if (currentRoute != "/home") {  // Muestra el botón de retroceso si no está en "home"
                                         IconButton(onClick = {
                                             scope.launch {
-                                                navigator.popBackStack()
+                                                navigator.popBackStack()  // Navega hacia atrás
                                             }
                                         }) {
                                             Icon(
@@ -149,7 +168,7 @@ fun App() {
                                     } else {
                                         IconButton(onClick = {
                                             scope.launch {
-                                                drawerState.open()
+                                                drawerState.open()  // Abre el Drawer si está en "home"
                                             }
                                         }) {
                                             Icon(
@@ -160,14 +179,15 @@ fun App() {
                                     }
                                 },
                                 actions = {
-                                    IconButton(onClick = { /* Acción para buscar */ }) {
+                                    // Botón de búsqueda en la barra superior
+                                    IconButton(onClick = { /* Acción de búsqueda */ }) {
                                         Icon(
                                             imageVector = Icons.Default.Search,
                                             contentDescription = "Buscar"
                                         )
                                     }
-
-                                    IconButton(onClick = { /* Acción para notificaciones */ }) {
+                                    // Botón de notificaciones en la barra superior
+                                    IconButton(onClick = { /* Acción de notificaciones */ }) {
                                         Icon(
                                             imageVector = Icons.Default.Notifications,
                                             contentDescription = "Notificaciones"
@@ -178,6 +198,9 @@ fun App() {
                         }
                     }
                 ) { paddingValues ->
+                    // --- Configuración de la navegación entre pantallas ---
+
+                    // Define el sistema de navegación, manejando el cambio entre distintas pantallas
                     NavHost(
                         navigator,
                         "/login",
@@ -185,29 +208,33 @@ fun App() {
                             .padding(paddingValues)
                             .background(Color(0xFFEFEFEF))
                     ) {
+                        // Pantalla de login
                         scene(route = "/login") {
                             currentRoute = "/login"
-                            LoginScreen(navigator, tokenViewModel, userViewModel)
+                            LoginScreen(navigator, userViewModel)
                         }
+                        // Pantalla de inicio
                         scene(route = "/home") {
                             currentRoute = "/home"
                             HomeScreen(navigator, userViewModel)
                         }
+                        // Pantalla de tareas pendientes del usuario
                         scene(route = "/tareas") {
                             currentRoute = "/tareas"
-                            // Pasamos el ID del usuario actual a la pantalla de tareas
                             val userId = userViewModel.usuario?.idUsuario
                             if (userId != null) {
                                 TareasPendientesScreen(
                                     tareaViewModel = tareaViewModel,
-                                    userId = userId // Pasar el ID del usuario actual
+                                    userId = userId  // Pasa el ID del usuario para filtrar sus tareas
                                 )
                             }
                         }
+                        // Pantalla de lista de plantas
                         scene(route = "/plantList") {
                             currentRoute = "/plantList"
                             PlantListScreen(navigator = navigator)
                         }
+                        // Pantalla de detalles de una planta específica
                         scene(route = "/plantDetail/{plantName}") { backStackEntry ->
                             currentRoute = "/plantDetail"
                             val plantName = backStackEntry.path<String>("plantName")
@@ -216,31 +243,33 @@ fun App() {
                                 PlantDetailScreen(plant = it, onBack = { navigator.popBackStack() })
                             }
                         }
+                        // Pantalla de estanques
                         scene(route = "/ponds") {
                             currentRoute = "/ponds"
                             PondScreen(navigator, userViewModel, estanqueViewModel)
                         }
+                        // Pantalla de sensores del estanque
                         scene(route = "/sensorScreen/{estanqueId}") { backStackEntry ->
                             val estanqueId = backStackEntry.path<Long>("estanqueId")
                             estanqueId?.let {
                                 SensorScreen(
                                     estanqueViewModel,
                                     mqttViewModel
-                                )  // Mostrar la pantalla de sensores
+                                )
                             }
                         }
+                        // Pantalla de cámara
                         scene(route = "/camara") {
                             currentRoute = "/camara"
                             CamaraScreen(navigator)
                         }
+                        // Pantalla del asistente de chat
                         scene(route = "/asistente") {
                             currentRoute = "/asistente"
                             ChatScreen(chatViewModel)
                         }
                     }
                 }
-
-
             }
         )
     }

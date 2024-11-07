@@ -11,16 +11,18 @@ import moe.tlaster.precompose.navigation.Navigator
 import techminds.greenguardian.R
 
 
+// --- CamaraScreen ---
+// Composable que representa una pantalla de cámara simulada, mostrando una imagen a tamaño completo.
 @Composable
 fun CamaraScreen(navigator: Navigator) {
     Box(
-        modifier = Modifier.fillMaxSize(),
-        contentAlignment = Alignment.Center
+        modifier = Modifier.fillMaxSize(),             // Ocupa toda la pantalla
+        contentAlignment = Alignment.Center            // Centra el contenido dentro del Box
     ) {
         Image(
-            painter = painterResource(id = R.drawable.cultivo), // Reemplaza con tu recurso de imagen
+            painter = painterResource(id = R.drawable.cultivo), // Recurso de imagen simulado
             contentDescription = "Simulación de cámara",
-            modifier = Modifier.fillMaxSize()
+            modifier = Modifier.fillMaxSize()           // La imagen se ajusta a toda la pantalla
         )
     }
 }

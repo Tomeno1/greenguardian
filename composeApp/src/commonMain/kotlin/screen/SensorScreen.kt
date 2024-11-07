@@ -37,7 +37,7 @@ fun SensorScreen(
     val context = LocalContext.current
     val sensorData by estanqueViewModel.selectedEstanqueNoSQL
     val estanqueConfigRanges by estanqueViewModel.selectedEstanque
-        var isDialogVisible  by remember { mutableStateOf(false) }
+    var isDialogVisible by remember { mutableStateOf(false) }
 
     if (estanqueConfigRanges != null && sensorData != null) {
         val configEstanqueRanges = estanqueConfigRanges
@@ -58,16 +58,19 @@ fun SensorScreen(
                     color = Color.Black
                 )
 
+                // Panel de control de sensores con botones de activación/desactivación
                 SensorControlPanel(mqttViewModel = mqttViewModel)
 
-                if (isDialogVisible ) {
+                // Diálogo para configurar rangos de sensores, activado por `isDialogVisible`
+                if (isDialogVisible) {
                     RangoAlertDialog(
-                        onDismiss = { isDialogVisible  = false },
+                        onDismiss = { isDialogVisible = false },
                         estanqueViewModel = estanqueViewModel,
                         estanqueSelected = configEstanqueRanges
                     )
                 }
 
+                // Sección de datos de los sensores
                 Text(
                     text = "Datos de los Sensores",
                     fontWeight = FontWeight.Bold,
@@ -78,6 +81,7 @@ fun SensorScreen(
                     color = Color.Black
                 )
 
+                // Cuadrícula de datos de sensores, mostrando temperatura, humedad, TDS y pH
                 LazyVerticalGrid(columns = GridCells.Fixed(2)) {
                     item {
                         SensorDataItem(
@@ -89,7 +93,7 @@ fun SensorScreen(
                             imageName = "temperatura",
                             color = Color(0xFF2196F3),
 
-                        )
+                            )
                     }
                     item {
                         SensorDataItem(
@@ -101,7 +105,7 @@ fun SensorScreen(
                             imageName = "humedad",
                             color = Color(0xFF4CAF50),
 
-                        )
+                            )
                     }
                     item {
                         SensorDataItem(
@@ -113,7 +117,7 @@ fun SensorScreen(
                             imageName = "tds",
                             color = Color(0xFFE0CF34),
 
-                        )
+                            )
                     }
                     item {
                         SensorDataItem(
@@ -125,10 +129,10 @@ fun SensorScreen(
                             imageName = "ph",
                             color = Color(0xFFF33628),
 
-                        )
+                            )
                     }
                 }
-
+                // Botón para abrir el diálogo de configuración de rangos de sensores
                 Button(
                     onClick = { isDialogVisible = true },
                     modifier = Modifier
@@ -153,14 +157,14 @@ fun RangoAlertDialog(
     estanqueViewModel: EstanqueViewModel,
     estanqueSelected: Estanque
 ) {
-    // Estados de cada rango
+    // Estados para los rangos de configuración de cada sensor
     var rangoTemp by remember { mutableStateOf(estanqueSelected.rangoTemp ?: "0-100") }
     var rangoHum by remember { mutableStateOf(estanqueSelected.rangoHum ?: "0-100") }
     var rangoEc by remember { mutableStateOf(estanqueSelected.rangoEc ?: "0-100") }
     var rangoLuz by remember { mutableStateOf(estanqueSelected.rangoLuz ?: "0-100") }
     var rangoPh by remember { mutableStateOf(estanqueSelected.rangoPh ?: "0-100") }
 
-    // Lista de rangos con sus etiquetas
+    // Lista de etiquetas y rangos para mostrarlos en el diálogo de configuración
     val ranges = listOf(
         "Rango de Temperatura (C°)" to rangoTemp,
         "Rango de Humedad (%)" to rangoHum,
@@ -193,7 +197,7 @@ fun RangoAlertDialog(
         },
         confirmButton = {
             Button(onClick = {
-                // Crear el objeto actualizado con los valores de los estados
+                // Crear y actualizar el estanque con los nuevos valores
                 val updatedEstanque = estanqueSelected.copy(
                     rangoTemp = rangoTemp,
                     rangoHum = rangoHum,
@@ -214,14 +218,17 @@ fun RangoAlertDialog(
                         Log.e("RangoAlertDialog", "Error al actualizar el estanque: $error")
                     }
                 )
-            }, colors = ButtonDefaults.buttonColors(backgroundColor = Color(0xFF38D13F)) ) {
-                Text(color = Color.White ,text = "Guardar")
+            }, colors = ButtonDefaults.buttonColors(backgroundColor = Color(0xFF38D13F))) {
+                Text(color = Color.White, text = "Guardar")
             }
         },
         dismissButton = {
-            Button(onClick = onDismiss, colors = ButtonDefaults.buttonColors(backgroundColor = Color.Red))
+            Button(
+                onClick = onDismiss,
+                colors = ButtonDefaults.buttonColors(backgroundColor = Color.Red)
+            )
             {
-                Text(color = Color.White ,text = "Cancelar")
+                Text(color = Color.White, text = "Cancelar")
             }
         }
     )
@@ -229,6 +236,7 @@ fun RangoAlertDialog(
 
 @Composable
 fun SensorRangeInput(label: String, rangeValue: String, onValueChange: (String) -> Unit) {
+    // Campo de entrada para modificar el rango del sensor en el diálogo
     OutlinedTextField(
         value = rangeValue,
         onValueChange = onValueChange,
@@ -242,7 +250,7 @@ fun SensorRangeInput(label: String, rangeValue: String, onValueChange: (String) 
         )
     )
 }
-
+// Función para convertir el rango en una tupla de flotantes
 fun parseRange(range: String): Pair<Float, Float> {
     val rangeParts = range.split("-")
     return if (rangeParts.size == 2) {
@@ -254,28 +262,36 @@ fun parseRange(range: String): Pair<Float, Float> {
 
 @Composable
 fun SensorControlPanel(mqttViewModel: MqttViewModel) {
+    // Estado para manejar si el riego (Irrigación) está activo o no
     var isIrrigationActive by remember { mutableStateOf(false) }
 
+    // Componente de fila de desplazamiento horizontal que contiene los controles de sensores
     LazyRow(
         modifier = Modifier
-            .fillMaxWidth(),
-        horizontalArrangement = Arrangement.spacedBy(8.dp)
+            .fillMaxWidth(),  // Ocupa todo el ancho de la pantalla
+        horizontalArrangement = Arrangement.spacedBy(8.dp)  // Espaciado entre los elementos
     ) {
+        // Itera sobre cada elemento en `sensorControls`, una lista de datos para los controles de sensores
         items(sensorControls) { sensorControl ->
             SensorControlCard(
-                icon = sensorControl.icon,
-                label = sensorControl.label,
+                icon = sensorControl.icon,  // Icono que representa el control
+                label = sensorControl.label,  // Etiqueta que muestra el nombre del control
                 isActive = if (sensorControl.label == "Irrigación") isIrrigationActive else sensorControl.isActive,
                 onToggle = { isActive ->
+                    // Si el control es "Irrigación", envía un mensaje MQTT para activar o desactivar el riego
                     if (sensorControl.label == "Irrigación") {
-                        val message = if (isActive) "1" else "0"
+                        val message = if (isActive) "1" else "0"  // Activa con "1" y desactiva con "0"
+
+                        // Publica el mensaje MQTT al tema correspondiente
                         mqttViewModel.publishMessage(
-                            topic = "esp32/1/sub",
-                            message = MessageMqtt(message = message),
+                            topic = "esp32/1/sub",  // Tema MQTT donde se envía el mensaje
+                            message = MessageMqtt(message = message),  // Mensaje que contiene "1" o "0"
                             onSuccess = {
+                                // Actualiza el estado de `isIrrigationActive` según el valor `isActive`
                                 isIrrigationActive = isActive
                             },
                             onError = { error ->
+                                // Registra el error en caso de fallo al publicar el mensaje MQTT
                                 Log.e("MQTT", "Error: $error")
                             }
                         )
@@ -285,6 +301,7 @@ fun SensorControlPanel(mqttViewModel: MqttViewModel) {
         }
     }
 }
+
 
 val sensorControls = listOf(
     SensorControlData(Icons.Default.WaterDrop, "Irrigación", true),
@@ -305,6 +322,7 @@ fun SensorControlCard(
     isActive: Boolean,
     onToggle: (Boolean) -> Unit
 ) {
+    // Tarjeta de control para activar/desactivar funciones como "Irrigación" y "Notificaciones"
     Card(
         shape = RoundedCornerShape(16.dp),
         elevation = 4.dp,
