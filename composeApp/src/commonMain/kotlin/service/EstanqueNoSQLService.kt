@@ -1,5 +1,6 @@
 package service
 
+import data.Config
 import io.ktor.client.HttpClient
 import io.ktor.client.call.body
 import io.ktor.client.request.get
@@ -9,7 +10,7 @@ import model.EstanqueNoSQL
 
 // Servicio para interactuar con datos del estanque en una base de datos NoSQL
 class EstanqueNoSQLService(private val client: HttpClient) {
-    private val baseUrl = "http://192.168.1.98:8080/api/estanque" // URL base del endpoint para estanques
+    private val baseUrl = "${Config.BASE_URL}/estanque" // URL base del endpoint para estanques
 
     // Función para obtener el último estado del estanque según el idEstanque dado
     suspend fun getUltimoEstanque(idEstanque: Int): Result<EstanqueNoSQL> {

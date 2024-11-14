@@ -95,7 +95,6 @@ class UsuarioViewModel(private val tokenViewModel: TokenViewModel) : ViewModel()
         }
     }
 
-    // Cargar estanques asociados a un usuario por su ID
     fun loadEstanquesByUsuario(userId: Long, onError: (String) -> Unit = {}) {
         val token = tokenViewModel.token
 
@@ -106,6 +105,9 @@ class UsuarioViewModel(private val tokenViewModel: TokenViewModel) : ViewModel()
         }
 
         viewModelScope.launch {
+            // Limpiar datos de estanques anteriores antes de cargar nuevos
+            estanquesByUsuario.value = null
+
             try {
                 val response = userService.getEstanquesByUsuario(token, userId)
                 if (response != null) {
@@ -121,6 +123,7 @@ class UsuarioViewModel(private val tokenViewModel: TokenViewModel) : ViewModel()
             }
         }
     }
+
 
     // Función para cargar el promedio de los estanques
     fun loadPromedioEstanques(userId: Long, onError: (String) -> Unit = {}) {

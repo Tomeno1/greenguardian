@@ -1,6 +1,7 @@
 package service
 
 import android.util.Log
+import data.Config
 import io.ktor.client.HttpClient
 import io.ktor.client.request.accept
 import io.ktor.client.request.delete
@@ -20,7 +21,7 @@ import model.Tarea
 
 // Servicio que interactúa con el backend para operaciones CRUD de Tareas
 class TareaService(private val client: HttpClient) {
-    private val baseUrl = "http://192.168.1.98:8080/api/tareas" // URL base del endpoint de tareas
+    private val baseUrl = "${Config.BASE_URL}/tareas" // URL base del endpoint de tareas
 
     // Obtener todas las tareas
     suspend fun getAllTareas(token: String): List<Tarea>? {

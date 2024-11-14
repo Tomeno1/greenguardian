@@ -23,6 +23,8 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import components.sendLocalNotification
+import model.Estado
 import model.Estanque
 import model.MessageMqtt
 import viewModel.EstanqueViewModel
@@ -34,121 +36,118 @@ fun SensorScreen(
     estanqueViewModel: EstanqueViewModel,
     mqttViewModel: MqttViewModel,
 ) {
-    val context = LocalContext.current
     val sensorData by estanqueViewModel.selectedEstanqueNoSQL
     val estanqueConfigRanges by estanqueViewModel.selectedEstanque
     var isDialogVisible by remember { mutableStateOf(false) }
+    val context = LocalContext.current
 
     if (estanqueConfigRanges != null && sensorData != null) {
-        val configEstanqueRanges = estanqueConfigRanges
-        val dataSensor = sensorData
-        if (configEstanqueRanges != null && dataSensor != null) {
-            Column(
+        Column(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(8.dp)
+        ) {
+            Text(
+                text = "Panel de Control",
+                fontWeight = FontWeight.Bold,
+                style = MaterialTheme.typography.h6,
                 modifier = Modifier
-                    .fillMaxSize()
-                    .padding(8.dp)
-            ) {
-                Text(
-                    text = "Panel de Control",
-                    fontWeight = FontWeight.Bold,
-                    style = MaterialTheme.typography.h6,
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(8.dp),
-                    color = Color.Black
+                    .fillMaxWidth()
+                    .padding(8.dp),
+                color = Color.Black
+            )
+
+            SensorControlPanel(mqttViewModel = mqttViewModel)
+
+            if (isDialogVisible) {
+                RangoAlertDialog(
+                    onDismiss = { isDialogVisible = false },
+                    estanqueViewModel = estanqueViewModel,
+                    estanqueSelected = estanqueConfigRanges!!
                 )
+            }
 
-                // Panel de control de sensores con botones de activación/desactivación
-                SensorControlPanel(mqttViewModel = mqttViewModel)
+            Text(
+                text = "Datos de los Sensores",
+                fontWeight = FontWeight.Bold,
+                style = MaterialTheme.typography.h6,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(8.dp),
+                color = Color.Black
+            )
 
-                // Diálogo para configurar rangos de sensores, activado por `isDialogVisible`
-                if (isDialogVisible) {
-                    RangoAlertDialog(
-                        onDismiss = { isDialogVisible = false },
-                        estanqueViewModel = estanqueViewModel,
-                        estanqueSelected = configEstanqueRanges
+            LazyVerticalGrid(columns = GridCells.Fixed(3)) {
+                item {
+                    SensorDataItem(
+                        label = "Temperatura",
+                        value = sensorData!!.deviceData.temperature,
+                        range = estanqueViewModel.parseRange(estanqueConfigRanges!!.rangoTemp ?: "0-100"),
+                        imageName = "temperatura",
+                        color = Color(0xFF2196F3),
+                        context = context
                     )
                 }
-
-                // Sección de datos de los sensores
-                Text(
-                    text = "Datos de los Sensores",
-                    fontWeight = FontWeight.Bold,
-                    style = MaterialTheme.typography.h6,
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(8.dp),
-                    color = Color.Black
-                )
-
-                // Cuadrícula de datos de sensores, mostrando temperatura, humedad, TDS y pH
-                LazyVerticalGrid(columns = GridCells.Fixed(2)) {
-                    item {
-                        SensorDataItem(
-                            context = context,
-                            sensorId = 1,
-                            label = "Temperatura",
-                            value = dataSensor.deviceData.temperature,
-                            range = parseRange(configEstanqueRanges.rangoTemp ?: "0-100"),
-                            imageName = "temperatura",
-                            color = Color(0xFF2196F3),
-
-                            )
-                    }
-                    item {
-                        SensorDataItem(
-                            context = context,
-                            sensorId = 2,
-                            label = "Humedad",
-                            value = dataSensor.deviceData.humidity,
-                            range = parseRange(configEstanqueRanges.rangoHum ?: "0-100"),
-                            imageName = "humedad",
-                            color = Color(0xFF4CAF50),
-
-                            )
-                    }
-                    item {
-                        SensorDataItem(
-                            context = context,
-                            sensorId = 3,
-                            label = "TDS",
-                            value = dataSensor.deviceData.ec,
-                            range = parseRange(configEstanqueRanges.rangoEc ?: "1.2-2.2"),
-                            imageName = "tds",
-                            color = Color(0xFFE0CF34),
-
-                            )
-                    }
-                    item {
-                        SensorDataItem(
-                            context = context,
-                            sensorId = 4,
-                            label = "PH",
-                            value = dataSensor.deviceData.ph,
-                            range = parseRange(configEstanqueRanges.rangoPh ?: "0-100"),
-                            imageName = "ph",
-                            color = Color(0xFFF33628),
-
-                            )
-                    }
+                item {
+                    SensorDataItem(
+                        label = "Humedad",
+                        value = sensorData!!.deviceData.humidity,
+                        range = estanqueViewModel.parseRange(estanqueConfigRanges!!.rangoHum ?: "0-100"),
+                        imageName = "humedad",
+                        color = Color(0xFF4CAF50),
+                        context = context
+                    )
                 }
-                // Botón para abrir el diálogo de configuración de rangos de sensores
-                Button(
-                    onClick = { isDialogVisible = true },
-                    modifier = Modifier
-                        .padding(8.dp)
-                        .fillMaxWidth(),
-                    colors = ButtonDefaults.buttonColors(backgroundColor = Color(0xFF38D13F))
-                ) {
-                    Text("Configurar Rangos de Sensores", color = Color.White)
+                item {
+                    SensorDataItem(
+                        label = "TDS",
+                        value = sensorData!!.deviceData.ec,
+                        range = estanqueViewModel.parseRange(estanqueConfigRanges!!.rangoEc ?: "1.2-2.2"),
+                        imageName = "tds",
+                        color = Color(0xFFE0CF34),
+                        context = context
+                    )
                 }
+                item {
+                    SensorDataItem(
+                        label = "PH",
+                        value = sensorData!!.deviceData.ph,
+                        range = estanqueViewModel.parseRange(estanqueConfigRanges!!.rangoPh ?: "0-14"),
+                        imageName = "ph",
+                        color = Color(0xFFF33628),
+                        context = context
+                    )
+                }
+                item {
+                    SensorDataItem(
+                        label = "LDR",
+                        value = sensorData!!.deviceData.ldr,
+                        range = estanqueViewModel.parseRange(estanqueConfigRanges!!.rangoLuz ?: "0-100"),
+                        imageName = "ldr",
+                        color = Color(0xFFFF9800),
+                        context = context
+                    )
+                }
+            }
+
+            Button(
+                onClick = { isDialogVisible = true },
+                modifier = Modifier
+                    .padding(8.dp)
+                    .fillMaxWidth(),
+                colors = ButtonDefaults.buttonColors(backgroundColor = Color(0xFF38D13F))
+            ) {
+                Text("Configurar Rangos de Sensores", color = Color.White)
             }
         }
     } else {
         Text(text = "Cargando datos de sensores...")
     }
-
 }
+
+
+
+
 
 
 @Composable
@@ -169,7 +168,7 @@ fun RangoAlertDialog(
         "Rango de Temperatura (C°)" to rangoTemp,
         "Rango de Humedad (%)" to rangoHum,
         "Rango de EC (mS/cm)" to rangoEc,
-        "Rango de Luz (lux)" to rangoLuz,
+        "Rango de Luz (ldr)" to rangoLuz,
         "Rango de Ph" to rangoPh
     )
 
@@ -187,7 +186,7 @@ fun RangoAlertDialog(
                                 "Rango de Temperatura (C°)" -> rangoTemp = it
                                 "Rango de Humedad (%)" -> rangoHum = it
                                 "Rango de EC (mS/cm)" -> rangoEc = it
-                                "Rango de Luz (lux)" -> rangoLuz = it
+                                "Rango de Luz (ldr)" -> rangoLuz = it
                                 "Rango de Ph" -> rangoPh = it
                             }
                         }
@@ -250,6 +249,7 @@ fun SensorRangeInput(label: String, rangeValue: String, onValueChange: (String) 
         )
     )
 }
+
 // Función para convertir el rango en una tupla de flotantes
 fun parseRange(range: String): Pair<Float, Float> {
     val rangeParts = range.split("-")
@@ -268,7 +268,7 @@ fun SensorControlPanel(mqttViewModel: MqttViewModel) {
     // Componente de fila de desplazamiento horizontal que contiene los controles de sensores
     LazyRow(
         modifier = Modifier
-            .fillMaxWidth(),  // Ocupa todo el ancho de la pantalla
+            .fillMaxWidth(),
         horizontalArrangement = Arrangement.spacedBy(8.dp)  // Espaciado entre los elementos
     ) {
         // Itera sobre cada elemento en `sensorControls`, una lista de datos para los controles de sensores
@@ -280,7 +280,8 @@ fun SensorControlPanel(mqttViewModel: MqttViewModel) {
                 onToggle = { isActive ->
                     // Si el control es "Irrigación", envía un mensaje MQTT para activar o desactivar el riego
                     if (sensorControl.label == "Irrigación") {
-                        val message = if (isActive) "1" else "0"  // Activa con "1" y desactiva con "0"
+                        val message =
+                            if (isActive) "1" else "0"  // Activa con "1" y desactiva con "0"
 
                         // Publica el mensaje MQTT al tema correspondiente
                         mqttViewModel.publishMessage(
@@ -289,6 +290,7 @@ fun SensorControlPanel(mqttViewModel: MqttViewModel) {
                             onSuccess = {
                                 // Actualiza el estado de `isIrrigationActive` según el valor `isActive`
                                 isIrrigationActive = isActive
+                                Log.d("MQTT", "Mensaje publicado: $message")
                             },
                             onError = { error ->
                                 // Registra el error en caso de fallo al publicar el mensaje MQTT

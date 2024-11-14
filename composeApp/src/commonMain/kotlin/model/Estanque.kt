@@ -1,5 +1,6 @@
 package model
 
+import androidx.compose.ui.graphics.Color
 import kotlinx.serialization.Serializable
 
 // --- Estanque ---
@@ -42,7 +43,8 @@ data class DeviceData(
     var humidity: Float,             // Humedad medida por el dispositivo
     var temperature: Float,          // Temperatura medida por el dispositivo
     var ph: Float,                   // pH medido por el dispositivo
-    var ec: Float                    // Conductividad eléctrica medida por el dispositivo
+    var ec: Float,// Conductividad eléctrica medida por el dispositivo
+    var ldr: Float          // Luz medida por el dispositivo
 )
 
 // --- EstanqueByUsuarioResponse ---
@@ -52,3 +54,10 @@ data class EstanqueByUsuarioResponse(
     val nombre: String,              // Nombre del usuario
     val listaEstanque: List<Estanque> // Lista de estanques asociados al usuario
 )
+
+enum class Estado(val color: Color) {
+    BUEN_ESTADO(Color(0xFF1AB320)),
+    ADVERTENCIA(Color(0xFFFFC107)),
+    MAL_ESTADO(Color(0xFFF44336)),
+    CARGANDO_ESTADO(Color.Gray)
+}

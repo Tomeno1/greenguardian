@@ -49,6 +49,7 @@ import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
@@ -60,6 +61,7 @@ import data.PlantDataManager
 import model.GuideStepData
 import model.Plant
 import moe.tlaster.precompose.navigation.Navigator
+import techminds.greenguardian.R
 import viewModel.EstanqueViewModel
 import viewModel.TokenViewModel
 import viewModel.UsuarioViewModel
@@ -341,7 +343,7 @@ fun GreetingCard(userName: String,lastName: String, usuarioViewModel: UsuarioVie
     ) {
 
 
-        // Mostrar la imagen seleccionada o el ícono predeterminado
+        // Mostrar la imagen seleccionada o la imagen predeterminada
         if (imageUri != null) {
             Image(
                 painter = rememberAsyncImagePainter(imageUri),
@@ -350,18 +352,18 @@ fun GreetingCard(userName: String,lastName: String, usuarioViewModel: UsuarioVie
                     .size(60.dp)
                     .clip(CircleShape) // Hace la imagen circular
                     .border(2.dp, Color.Gray, CircleShape),
-                contentScale = ContentScale.Crop // Borde blanco alrededor de la imagen
+                contentScale = ContentScale.Crop // Ajusta la imagen para llenar el círculo
             )
         } else {
-            // Mostrar ícono predeterminado si no hay imagen seleccionada
-            Icon(
-                imageVector = Icons.Default.AccountCircle,
-                contentDescription = "User Icon",
+            // Mostrar imagen predeterminada si no hay imagen seleccionada
+            Image(
+                painter = painterResource(R.drawable.greenguardian  ), // Imagen predeterminada de drawable
+                contentDescription = "Default User Icon",
                 modifier = Modifier
                     .size(60.dp)
                     .clip(CircleShape)
                     .border(2.dp, Color.White, CircleShape),
-                tint = Color.White
+                contentScale = ContentScale.Crop
             )
         }
 

@@ -37,6 +37,8 @@ import components.CustomButton
 import components.EstanqueCard
 import components.getImageResourceByName
 import components.getImageRsourceSensorByName
+import components.sendLocalNotification
+import model.Estado
 import moe.tlaster.precompose.navigation.Navigator
 import viewModel.EstanqueViewModel
 import viewModel.UsuarioViewModel
@@ -62,6 +64,13 @@ fun PondScreen(
         }
     }
 
+    // Efecto que se ejecuta cuando los estanques están disponibles
+    LaunchedEffect(estanquesByUsuario) {
+        estanquesByUsuario?.listaEstanque?.forEach { estanque ->
+            estanqueViewModel.loadEstanqueNoSQLById(estanque.idEstanque.toInt())
+        }
+    }
+
     // Diseño principal de la pantalla
     Column(
         modifier = Modifier
@@ -79,10 +88,15 @@ fun PondScreen(
             ) {
                 items(estanquesByUsuario.listaEstanque.size) { index ->
                     val estanque = estanquesByUsuario.listaEstanque[index]
+                    val estadoEstanque = estanqueViewModel.determineEstanqueEstado(
+                        estanqueViewModel.selectedEstanqueNoSQL.value,
+                        estanque
+                    )
+
                     EstanqueCard(
                         estanqueName = "Estanque: ${estanque.idEstanque}",
                         plantImage = getImageResourceByName("lechuga"),
-                        // status = Status.GOOD, // Puedes agregar el estado si lo necesitas
+                        estado = estadoEstanque,
                         onClick = {
                             // Registro en la consola al hacer clic
                             Log.d("EstanqueClick", "Estanque ${estanque.idEstanque} seleccionado")
@@ -109,40 +123,43 @@ fun PondScreen(
 }
 
 
-// --- Elemento de datos de sensor ---
+
 @Composable
 fun SensorDataItem(
-    context: Context,
     label: String,
-    value: Float,             // Valor actual del sensor
-    range: Pair<Float, Float>, // Rango permitido (mínimo, máximo)
+    value: Float,
+    range: ClosedRange<Float>, // Rango en ClosedRange<Float>
     imageName: String,
     color: Color,
-    sensorId: Int
+    context: Context
 ) {
     val showTooltip = remember { mutableStateOf(false) }
     var isNotificationSent by remember { mutableStateOf(false) }
-    val (minRange, maxRange) = range
 
     // Calcula el progreso para el indicador circular, normalizado entre 0 y 1
-    val progress = ((value - minRange) / (maxRange - minRange)).coerceIn(0f, 1f)
+    val progress = ((value - range.start) / (range.endInclusive - range.start)).coerceIn(0f, 1f)
 
     // Verificar si el valor del sensor está fuera del rango
-    if (value < minRange || value > maxRange) {
-        if (!isNotificationSent) {  // Si aún no se ha enviado la notificación
-            val alertMessage =
-                "$label está fuera del rango ($minRange - $maxRange). Valor actual: $value"
+    if (value !in range) {
+        if (!isNotificationSent) { // Envía notificación solo si no se ha enviado antes
+            val alertMessage = "$label está fuera del rango (${range.start} - ${range.endInclusive}). Valor actual: $value"
             Log.d("SensorDataItem", alertMessage)
 
-            // Aquí podrías implementar la lógica para enviar una notificación al usuario
+            // Enviar la notificación
+            sendLocalNotification(
+                context = context,
+                title = "Alerta de $label",
+                message = alertMessage,
+                notificationId = (label.hashCode() + value.toInt()) // ID único por sensor y valor
+            )
 
             // Marcar que ya se envió la notificación
             isNotificationSent = true
         }
     } else {
-        // Si el valor vuelve al rango normal, resetear el estado
+        // Si el valor vuelve al rango normal, resetear el estado para futuras notificaciones
         isNotificationSent = false
-        Log.d("SensorDataItem", "$label dentro del rango: $value (rango: $minRange - $maxRange)")
+        Log.d("SensorDataItem", "$label dentro del rango: $value (rango: ${range.start} - ${range.endInclusive})")
     }
 
     // Diseño del elemento de sensor
@@ -154,7 +171,7 @@ fun SensorDataItem(
         Card(
             shape = RoundedCornerShape(8.dp),
             modifier = Modifier
-                .clickable { showTooltip.value = !showTooltip.value } // Al hacer clic, muestra información adicional
+                .clickable { showTooltip.value = !showTooltip.value }
                 .fillMaxSize(),
             elevation = 4.dp
         ) {
@@ -162,13 +179,11 @@ fun SensorDataItem(
                 contentAlignment = Alignment.Center,
                 modifier = Modifier.fillMaxSize()
             ) {
-                // Indicador circular con el valor del sensor
                 CircularProgressWithText(
                     progress = progress,
                     text = "${value.toInt()}",
                     color = color
                 )
-                // Imagen del sensor en la esquina superior derecha
                 Image(
                     painter = painterResource(id = getImageRsourceSensorByName(imageName)),
                     contentDescription = label,
@@ -180,7 +195,6 @@ fun SensorDataItem(
             }
         }
 
-        // Popup que muestra detalles adicionales al hacer clic
         if (showTooltip.value) {
             Popup(
                 alignment = Alignment.Center,
@@ -213,7 +227,6 @@ fun SensorDataItem(
                             color = Color.Gray,
                             modifier = Modifier.padding(bottom = 8.dp)
                         )
-                        // Botón para cerrar el popup
                         CustomButton(text = "Cerrar", onClick = { showTooltip.value = false })
                     }
                 }
@@ -221,6 +234,8 @@ fun SensorDataItem(
         }
     }
 }
+
+
 
 // --- Indicador circular con texto ---
 @Composable

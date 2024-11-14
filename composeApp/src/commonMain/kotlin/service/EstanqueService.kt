@@ -1,6 +1,7 @@
 package service
 
 import android.util.Log
+import data.Config
 import io.ktor.client.HttpClient
 import io.ktor.client.call.body
 import io.ktor.client.request.accept
@@ -20,7 +21,7 @@ import model.Estanque
 
 // Servicio para manejar operaciones CRUD en el modelo Estanque
 class EstanqueService(private val client: HttpClient) {
-    private val baseUrl = "http://192.168.1.98:8080/api/estanques" // URL base para el servicio de estanques
+    private val baseUrl = "${Config.BASE_URL}/estanques" // URL base para el servicio de estanques
 
     // Obtener todos los estanques disponibles
     suspend fun getAllEstanques(): List<Estanque>? {

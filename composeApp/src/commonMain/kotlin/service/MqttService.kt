@@ -1,5 +1,6 @@
 package service
 
+import data.Config
 import io.ktor.client.HttpClient
 import io.ktor.client.request.parameter
 import io.ktor.client.request.post
@@ -13,7 +14,7 @@ import model.MessageMqtt
 
 // Servicio para interactuar con el backend para publicar mensajes MQTT
 class MqttService(private val client: HttpClient) {
-    private val baseUrl = "http://192.168.1.98:8080/api/awsiot" // URL base de la API
+    private val baseUrl = "${Config.BASE_URL}/awsiot" // URL base de la API
 
     // Función para publicar un mensaje MQTT en un tema específico
     suspend fun publishMessage(topic: String, message: MessageMqtt): Result<String> {

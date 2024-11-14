@@ -1,6 +1,7 @@
 package service
 
 import android.util.Log
+import data.Config
 import service.JsonProvider.json
 import io.ktor.client.HttpClient
 import io.ktor.client.request.accept
@@ -21,7 +22,7 @@ import model.Usuario
 
 // Servicio que permite realizar operaciones CRUD sobre usuarios y obtener información de estanques relacionados
 class UserService(private val client: HttpClient) {
-    private val baseUrl = "http://192.168.1.98:8080/api/usuarios" // URL base para el endpoint de usuarios
+    private val baseUrl = "${Config.BASE_URL}/usuarios" // URL base para el endpoint de usuarios
 
     // Obtener un usuario específico por ID con autenticación
     suspend fun getUser(token: String, userId: Long): Usuario? {
@@ -124,7 +125,7 @@ class UserService(private val client: HttpClient) {
                 null
             }
         } catch (e: Exception) {
-            Log.e("UserService", "Excepción en getPromedioEstanques: ${e.message}")
+            Log.e("UserService", "Excepción en getPromedioEstanques: ${e.localizedMessage}")
             null
         }
     }

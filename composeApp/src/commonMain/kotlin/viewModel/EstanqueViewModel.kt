@@ -7,10 +7,12 @@ import service.EstanqueNoSQLService
 import service.EstanqueService
 import service.HttpClientProvider
 import kotlinx.coroutines.launch
+import model.Estado
 import model.Estanque
 import model.EstanqueNoSQL
 import moe.tlaster.precompose.viewmodel.ViewModel
 import moe.tlaster.precompose.viewmodel.viewModelScope
+import screen.parseRange
 
 class EstanqueViewModel(private val tokenViewModel: TokenViewModel) : ViewModel() {
 
@@ -37,6 +39,9 @@ class EstanqueViewModel(private val tokenViewModel: TokenViewModel) : ViewModel(
     // Mensaje de error para operaciones NoSQL
     var errorMessage = mutableStateOf<String?>(null)
         private set
+
+    var isLoading = mutableStateOf(true)
+
 
     // Función para cargar todos los estanques desde la base de datos SQL
     fun loadEstanques() {
@@ -170,4 +175,35 @@ class EstanqueViewModel(private val tokenViewModel: TokenViewModel) : ViewModel(
             }
         }
     }
+
+    // Función para convertir el rango en un ClosedRange de flotantes
+    fun parseRange(range: String): ClosedRange<Float> {
+        val rangeParts = range.split("-")
+        val min = rangeParts.getOrNull(0)?.toFloatOrNull() ?: 0f
+        val max = rangeParts.getOrNull(1)?.toFloatOrNull() ?: 100f
+        return min..max
+    }
+
+    // Función en EstanqueViewModel para determinar el estado del estanque
+    fun determineEstanqueEstado(estanqueNoSQL: EstanqueNoSQL?, estanqueConfig: Estanque?): Estado {
+        if (estanqueNoSQL == null || estanqueConfig == null) {
+            return Estado.CARGANDO_ESTADO // Estado de advertencia si falta algún dato
+        }
+
+        val deviceData = estanqueNoSQL.deviceData
+        val fueraDeRango = listOf(
+            deviceData.temperature !in parseRange(estanqueConfig.rangoTemp ?: "0-100"),
+            deviceData.humidity !in parseRange(estanqueConfig.rangoHum ?: "0-100"),
+            deviceData.ec !in parseRange(estanqueConfig.rangoEc ?: "1.2-2.2"),
+            deviceData.ph !in parseRange(estanqueConfig.rangoPh ?: "0-14"),
+            deviceData.ldr !in parseRange(estanqueConfig.rangoLuz ?: "0-100")
+        )
+
+        return when {
+            fueraDeRango.all { !it } -> Estado.BUEN_ESTADO // Todos los valores están dentro de rango
+            fueraDeRango.any { it } -> Estado.ADVERTENCIA // Alguno está fuera de rango
+            else -> Estado.MAL_ESTADO // Todos los valores están fuera de rango
+        }
+    }
+
 }
