@@ -1,20 +1,24 @@
 package viewModel
 
+import android.os.Build
 import android.util.Log
+import androidx.annotation.RequiresApi
 import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
-import service.EstanqueNoSQLService
-import service.EstanqueService
-import service.HttpClientProvider
 import kotlinx.coroutines.launch
 import model.Estado
 import model.Estanque
 import model.EstanqueNoSQL
+import model.MessageHorarioRiego
 import moe.tlaster.precompose.viewmodel.ViewModel
 import moe.tlaster.precompose.viewmodel.viewModelScope
-import screen.parseRange
+import service.EstanqueNoSQLService
+import service.EstanqueService
+import service.HttpClientProvider
+import java.time.LocalTime
+import java.time.format.DateTimeFormatter
 
-class EstanqueViewModel(private val tokenViewModel: TokenViewModel) : ViewModel() {
+class EstanqueViewModel(private val tokenViewModel: TokenViewModel, private val mqttViewModel: MqttViewModel) : ViewModel() {
 
     init {
         Log.d("EstanqueViewModel", "EstanqueViewModel creado")
@@ -99,10 +103,16 @@ class EstanqueViewModel(private val tokenViewModel: TokenViewModel) : ViewModel(
                 val result = estanqueNoSQLService.getUltimoEstanque(idEstanque)
                 result.onSuccess { data ->
                     selectedEstanqueNoSQL.value = data
-                    Log.d("EstanqueViewModel", "Estanque NoSQL cargado correctamente: ${data.idEstanque}, temperatura: ${data.deviceData.temperature}, humedad: ${data.deviceData.humidity}")
+                    Log.d(
+                        "EstanqueViewModel",
+                        "Estanque NoSQL cargado correctamente: ${data.idEstanque}, temperatura: ${data.deviceData.temperature}, humedad: ${data.deviceData.humidity}"
+                    )
                 }.onFailure { exception ->
                     errorMessage.value = exception.message
-                    Log.e("EstanqueViewModel", "Error al cargar el estanque NoSQL: ${exception.message}")
+                    Log.e(
+                        "EstanqueViewModel",
+                        "Error al cargar el estanque NoSQL: ${exception.message}"
+                    )
                 }
             } catch (e: Exception) {
                 Log.e("EstanqueViewModel", "Error al cargar el estanque NoSQL: ${e.message}")
@@ -130,7 +140,12 @@ class EstanqueViewModel(private val tokenViewModel: TokenViewModel) : ViewModel(
     }
 
     // Función para actualizar un estanque en la base de datos SQL por ID
-    fun updateEstanque(idEstanque: Long, estanque: Estanque, onSuccess: () -> Unit, onError: (String) -> Unit) {
+    fun updateEstanque(
+        idEstanque: Long,
+        estanque: Estanque,
+        onSuccess: () -> Unit,
+        onError: (String) -> Unit
+    ) {
         val token = tokenViewModel.token
         viewModelScope.launch {
             try {
@@ -205,5 +220,22 @@ class EstanqueViewModel(private val tokenViewModel: TokenViewModel) : ViewModel(
             else -> Estado.MAL_ESTADO // Todos los valores están fuera de rango
         }
     }
+
+
+    @RequiresApi(Build.VERSION_CODES.O)
+    fun publishIrrigationSchedule(estanque: Estanque) {
+        val horaActual = LocalTime.now().format(DateTimeFormatter.ofPattern("HH:mm"))
+        val message = MessageHorarioRiego(
+            message = "Horarios de riego",
+            hora_actual = horaActual,
+            rango_horario = estanque.horarioRiego
+        )
+        mqttViewModel.publishMessageRiego("esp32/1/sub", message, {
+            Log.d("EstanqueViewModel", "Mensaje de riego publicado correctamente")
+        }, {
+            Log.e("EstanqueViewModel", "Error al publicar el mensaje de riego: $it")
+        })
+    }
+
 
 }

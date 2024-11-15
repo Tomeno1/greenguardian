@@ -2,33 +2,39 @@ package viewModel
 
 import service.MqttService
 import kotlinx.coroutines.launch
-import model.MessageMqtt
+import model.MessageIrrigacion
+import model.MessageHorarioRiego
 import moe.tlaster.precompose.viewmodel.ViewModel
 import moe.tlaster.precompose.viewmodel.viewModelScope
 
 class MqttViewModel(private val mqttService: MqttService) : ViewModel() {
 
-    // Función para publicar un mensaje en un tema MQTT
+    // Publica un mensaje genérico en un tema MQTT
     fun publishMessage(
-        topic: String,                 // Tema al que se enviará el mensaje MQTT
-        message: MessageMqtt,           // Mensaje a enviar, contiene el contenido del mensaje en un objeto MessageMqtt
-        onSuccess: (String) -> Unit,    // Callback a ejecutar en caso de éxito
-        onError: (String) -> Unit       // Callback a ejecutar en caso de error
+        topic: String,
+        message: MessageIrrigacion,
+        onSuccess: (String) -> Unit,
+        onError: (String) -> Unit
     ) {
-        // Ejecutamos la operación en un contexto asincrónico
         viewModelScope.launch {
-            // Llamada al servicio MQTT para publicar el mensaje
-            val result = mqttService.publishMessage(topic, message)
+            mqttService.publishMessage(topic, message).fold(
+                onSuccess = { onSuccess(it) },
+                onFailure = { onError("Error: ${it.message}") }
+            )
+        }
+    }
 
-            // Evaluamos el resultado de la publicación
-            result.fold(
-                onSuccess = { response ->
-                    onSuccess(response)  // Llamamos al callback de éxito pasando la respuesta del servidor
-                },
-                onFailure = { error ->
-                    // Llamamos al callback de error con el mensaje del error
-                    onError("Error: ${error.message}")
-                }
+    // Publica un mensaje de riego en un tema MQTT
+    fun publishMessageRiego(
+        topic: String,
+        message: MessageHorarioRiego,
+        onSuccess: (String) -> Unit,
+        onError: (String) -> Unit
+    ) {
+        viewModelScope.launch {
+            mqttService.publishMessageRiego(topic, message).fold(
+                onSuccess = { onSuccess(it) },
+                onFailure = { onError("Error: ${it.message}") }
             )
         }
     }

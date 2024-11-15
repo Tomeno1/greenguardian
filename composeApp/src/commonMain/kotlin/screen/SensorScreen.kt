@@ -1,20 +1,43 @@
 package screen
 
-import android.content.Context
+import android.os.Build
 import android.util.Log
+import androidx.annotation.RequiresApi
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material.*
+import androidx.compose.material.AlertDialog
+import androidx.compose.material.Button
+import androidx.compose.material.ButtonDefaults
+import androidx.compose.material.Card
+import androidx.compose.material.Icon
+import androidx.compose.material.MaterialTheme
+import androidx.compose.material.OutlinedTextField
+import androidx.compose.material.Switch
+import androidx.compose.material.SwitchDefaults
+import androidx.compose.material.Text
+import androidx.compose.material.TextFieldDefaults
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Notifications
 import androidx.compose.material.icons.filled.Schedule
 import androidx.compose.material.icons.filled.WaterDrop
-import androidx.compose.runtime.*
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -23,14 +46,12 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import components.sendLocalNotification
-import model.Estado
 import model.Estanque
-import model.MessageMqtt
+import model.MessageIrrigacion
 import viewModel.EstanqueViewModel
 import viewModel.MqttViewModel
-import viewModel.UsuarioViewModel
 
+@RequiresApi(Build.VERSION_CODES.O)
 @Composable
 fun SensorScreen(
     estanqueViewModel: EstanqueViewModel,
@@ -57,7 +78,11 @@ fun SensorScreen(
                 color = Color.Black
             )
 
-            SensorControlPanel(mqttViewModel = mqttViewModel)
+            // Incluimos el horario de riego en el panel de control de sensores
+            SensorControlPanel(
+                mqttViewModel = mqttViewModel,
+                estanqueViewModel = estanqueViewModel
+            )
 
             if (isDialogVisible) {
                 RangoAlertDialog(
@@ -162,6 +187,7 @@ fun RangoAlertDialog(
     var rangoEc by remember { mutableStateOf(estanqueSelected.rangoEc ?: "0-100") }
     var rangoLuz by remember { mutableStateOf(estanqueSelected.rangoLuz ?: "0-100") }
     var rangoPh by remember { mutableStateOf(estanqueSelected.rangoPh ?: "0-100") }
+    var rangoHorario by remember { mutableStateOf(estanqueSelected.horarioRiego ?: "0-100") }
 
     // Lista de etiquetas y rangos para mostrarlos en el diálogo de configuración
     val ranges = listOf(
@@ -169,7 +195,8 @@ fun RangoAlertDialog(
         "Rango de Humedad (%)" to rangoHum,
         "Rango de EC (mS/cm)" to rangoEc,
         "Rango de Luz (ldr)" to rangoLuz,
-        "Rango de Ph" to rangoPh
+        "Rango de Ph" to rangoPh,
+        "Rango de Horario" to rangoHorario
     )
 
     AlertDialog(
@@ -188,6 +215,7 @@ fun RangoAlertDialog(
                                 "Rango de EC (mS/cm)" -> rangoEc = it
                                 "Rango de Luz (ldr)" -> rangoLuz = it
                                 "Rango de Ph" -> rangoPh = it
+                                "Rango de Horario" -> rangoHorario = it
                             }
                         }
                     )
@@ -202,7 +230,8 @@ fun RangoAlertDialog(
                     rangoHum = rangoHum,
                     rangoEc = rangoEc,
                     rangoLuz = rangoLuz,
-                    rangoPh = rangoPh
+                    rangoPh = rangoPh,
+                    horarioRiego = rangoHorario
                 )
                 // Llamada al ViewModel para actualizar el estanque
                 estanqueViewModel.updateEstanque(
@@ -260,49 +289,50 @@ fun parseRange(range: String): Pair<Float, Float> {
     }
 }
 
+@RequiresApi(Build.VERSION_CODES.O)
 @Composable
-fun SensorControlPanel(mqttViewModel: MqttViewModel) {
-    // Estado para manejar si el riego (Irrigación) está activo o no
+fun SensorControlPanel(
+    mqttViewModel: MqttViewModel,
+    estanqueViewModel: EstanqueViewModel
+) {
     var isIrrigationActive by remember { mutableStateOf(false) }
 
-    // Componente de fila de desplazamiento horizontal que contiene los controles de sensores
     LazyRow(
-        modifier = Modifier
-            .fillMaxWidth(),
-        horizontalArrangement = Arrangement.spacedBy(8.dp)  // Espaciado entre los elementos
+        modifier = Modifier.fillMaxWidth(),
+        horizontalArrangement = Arrangement.spacedBy(8.dp)
     ) {
-        // Itera sobre cada elemento en `sensorControls`, una lista de datos para los controles de sensores
-        items(sensorControls) { sensorControl ->
+        items(sensorControls) { control ->
             SensorControlCard(
-                icon = sensorControl.icon,  // Icono que representa el control
-                label = sensorControl.label,  // Etiqueta que muestra el nombre del control
-                isActive = if (sensorControl.label == "Irrigación") isIrrigationActive else sensorControl.isActive,
+                icon = control.icon,
+                label = control.label,
+                isActive = if (control.label == "Irrigación") isIrrigationActive else control.isActive,
                 onToggle = { isActive ->
-                    // Si el control es "Irrigación", envía un mensaje MQTT para activar o desactivar el riego
-                    if (sensorControl.label == "Irrigación") {
-                        val message =
-                            if (isActive) "1" else "0"  // Activa con "1" y desactiva con "0"
-
-                        // Publica el mensaje MQTT al tema correspondiente
-                        mqttViewModel.publishMessage(
-                            topic = "esp32/1/sub",  // Tema MQTT donde se envía el mensaje
-                            message = MessageMqtt(message = message),  // Mensaje que contiene "1" o "0"
-                            onSuccess = {
-                                // Actualiza el estado de `isIrrigationActive` según el valor `isActive`
-                                isIrrigationActive = isActive
-                                Log.d("MQTT", "Mensaje publicado: $message")
-                            },
-                            onError = { error ->
-                                // Registra el error en caso de fallo al publicar el mensaje MQTT
-                                Log.e("MQTT", "Error: $error")
-                            }
-                        )
+                    when (control.label) {
+                        "Irrigación" -> {
+                            val message = MessageIrrigacion(if (isActive) "1" else "0")
+                            mqttViewModel.publishMessage(
+                                topic = "esp32/1/sub",
+                                message = message,
+                                onSuccess = {
+                                    isIrrigationActive = isActive
+                                    Log.d("MQTT", "Irrigación activada: $message")
+                                },
+                                onError = { Log.e("MQTT", "Error en irrigación: $it") }
+                            )
+                        }
+                        "Horario" -> {
+                            estanqueViewModel.selectedEstanque.value?.let { estanque ->
+                                estanqueViewModel.publishIrrigationSchedule(estanque)
+                            } ?: Log.e("SensorControlPanel", "Estanque no seleccionado")
+                        }
                     }
                 }
             )
         }
     }
 }
+
+
 
 
 val sensorControls = listOf(

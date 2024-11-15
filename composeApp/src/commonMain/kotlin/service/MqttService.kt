@@ -1,5 +1,6 @@
 package service
 
+import android.util.Log
 import data.Config
 import io.ktor.client.HttpClient
 import io.ktor.client.request.parameter
@@ -10,32 +11,58 @@ import io.ktor.client.statement.bodyAsText
 import io.ktor.http.ContentType
 import io.ktor.http.contentType
 import io.ktor.http.isSuccess
-import model.MessageMqtt
+import model.MessageHorarioRiego
+import model.MessageIrrigacion
 
 // Servicio para interactuar con el backend para publicar mensajes MQTT
 class MqttService(private val client: HttpClient) {
     private val baseUrl = "${Config.BASE_URL}/awsiot" // URL base de la API
 
     // Función para publicar un mensaje MQTT en un tema específico
-    suspend fun publishMessage(topic: String, message: MessageMqtt): Result<String> {
+    suspend fun publishMessage(topic: String, message: MessageIrrigacion): Result<String> {
         return try {
-            // Realiza una solicitud POST al endpoint de publicación MQTT
             val response: HttpResponse = client.post("$baseUrl/publish") {
-                contentType(ContentType.Application.Json) // Establece el tipo de contenido como JSON
-                parameter("topic", topic) // Agrega el tema como parámetro en la URL
-                setBody(message) // Configura el mensaje en el cuerpo de la solicitud
+                contentType(ContentType.Application.Json)
+                parameter("topic", topic)
+                setBody(message)
             }
 
-            // Verifica si la respuesta es exitosa
+            // Logs detallados de la respuesta del servidor
+            Log.d("MqttService", "publishMessage - Código de estado: ${response.status.value}")
+            Log.d("MqttService", "publishMessage - Cuerpo de respuesta: ${response.bodyAsText()}")
+
             if (response.status.isSuccess()) {
-                Result.success(response.bodyAsText())  // Retorna el cuerpo de la respuesta en caso de éxito
+                Result.success(response.bodyAsText())
             } else {
-                // Devuelve un error si la publicación falla
                 Result.failure(Exception("Error al publicar el mensaje en el tema $topic"))
             }
         } catch (e: Exception) {
-            e.printStackTrace()
-            Result.failure(e)  // Manejo de errores en caso de excepción
+            Log.e("MqttService", "Excepción en publishMessage: ${e.localizedMessage}")
+            Result.failure(e)
+        }
+    }
+
+    // Función para publicar un mensaje de riego MQTT en un tema específico
+    suspend fun publishMessageRiego(topic: String, message: MessageHorarioRiego): Result<String> {
+        return try {
+            val response: HttpResponse = client.post("$baseUrl/publish/riego") {
+                contentType(ContentType.Application.Json)
+                parameter("topic", topic)
+                setBody(message)
+            }
+
+            // Logs detallados de la respuesta del servidor
+            Log.d("MqttService", "publishMessageRiego - Código de estado: ${response.status.value}")
+            Log.d("MqttService", "publishMessageRiego - Cuerpo de respuesta: ${response.bodyAsText()}")
+
+            if (response.status.isSuccess()) {
+                Result.success(response.bodyAsText())
+            } else {
+                Result.failure(Exception("Error al publicar el mensaje en el tema $topic"))
+            }
+        } catch (e: Exception) {
+            Log.e("MqttService", "Excepción en publishMessageRiego: ${e.localizedMessage}")
+            Result.failure(e)
         }
     }
 }

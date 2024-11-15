@@ -1,3 +1,5 @@
+import android.os.Build
+import androidx.annotation.RequiresApi
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
@@ -58,6 +60,7 @@ import viewModel.TareaViewModel
 import viewModel.TokenViewModel
 import viewModel.UsuarioViewModel
 
+@RequiresApi(Build.VERSION_CODES.O)
 @Composable
 @Preview
 fun App() {
@@ -83,7 +86,7 @@ fun App() {
         val chatViewModel = viewModel { ChatViewModel(openAIService) }
         val tokenViewModel = viewModel { TokenViewModel() }
         val mqttViewModel = viewModel { MqttViewModel(mqttService) }
-        val estanqueViewModel = viewModel { EstanqueViewModel(tokenViewModel) }
+        val estanqueViewModel = viewModel { EstanqueViewModel(tokenViewModel, mqttViewModel) }
         val userViewModel = viewModel { UsuarioViewModel(tokenViewModel) }
         val tareaViewModel = viewModel { TareaViewModel(tokenViewModel) }
 
